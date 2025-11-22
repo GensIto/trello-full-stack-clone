@@ -13,5 +13,8 @@ export * from "./board";
 // Value Objects - Membership
 export * from "./membership";
 
+// Value Objects - Invitation
+export * from "./invitation";
+
 // Value Objects - Role
 export * from "./role";

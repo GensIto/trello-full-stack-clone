@@ -3,7 +3,6 @@ import { workspaceMemberships } from "../db/workspace-schema";
 import { WorkspaceMembership } from "../domain/entities";
 import {
   MembershipId,
-  MembershipStatus,
   RoleId,
   UserId,
   WorkspaceId,
@@ -16,7 +15,7 @@ export interface IWorkspaceMembershipsRepository {
   findByUserId(userId: UserId): Promise<WorkspaceMembership>;
   create(
     workspaceMembership: WorkspaceMembership,
-    tx: DrizzleTransaction
+    tx?: DrizzleTransaction
   ): Promise<WorkspaceMembership>;
   update(
     workspaceMembership: WorkspaceMembership
@@ -43,7 +42,6 @@ export class WorkspaceMembershipsRepository
       MembershipId.of(workspaceMembership.membershipId),
       WorkspaceId.of(workspaceMembership.workspaceId),
       UserId.of(workspaceMembership.userId),
-      MembershipStatus.of(workspaceMembership.status),
       RoleId.of(workspaceMembership.roleId)
     );
   }
@@ -60,7 +58,6 @@ export class WorkspaceMembershipsRepository
         MembershipId.of(workspaceMembership.membershipId),
         WorkspaceId.of(workspaceMembership.workspaceId),
         UserId.of(workspaceMembership.userId),
-        MembershipStatus.of(workspaceMembership.status),
         RoleId.of(workspaceMembership.roleId)
       )
     );
@@ -80,7 +77,6 @@ export class WorkspaceMembershipsRepository
       MembershipId.of(result.membershipId),
       WorkspaceId.of(result.workspaceId),
       UserId.of(result.userId),
-      MembershipStatus.of(result.status),
       RoleId.of(result.roleId)
     );
   }
@@ -106,7 +102,6 @@ export class WorkspaceMembershipsRepository
       MembershipId.of(result.membershipId),
       WorkspaceId.of(result.workspaceId),
       UserId.of(result.userId),
-      MembershipStatus.of(result.status),
       RoleId.of(result.roleId)
     );
   }
@@ -133,7 +128,6 @@ export class WorkspaceMembershipsRepository
       MembershipId.of(result.membershipId),
       WorkspaceId.of(result.workspaceId),
       UserId.of(result.userId),
-      MembershipStatus.of(result.status),
       RoleId.of(result.roleId)
     );
   }

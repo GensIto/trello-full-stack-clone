@@ -29,9 +29,31 @@ export const workspaceMemberships = sqliteTable("workspace_memberships", {
   roleId: integer("role_id")
     .notNull()
     .references(() => roles.roleId),
-  status: text("status", { enum: ["invited", "joined"] })
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    .notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    .$onUpdate(() => sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    .notNull(),
+});
+
+export const workspaceInvitations = sqliteTable("workspace_invitations", {
+  invitationId: text("invitation_id").primaryKey(),
+  workspaceId: text("workspace_id")
     .notNull()
-    .default("invited"),
+    .references(() => workspaces.workspaceId, { onDelete: "cascade" }),
+  invitedEmail: text("invited_email").notNull(),
+  invitedBy: text("invited_by")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  roleId: integer("role_id")
+    .notNull()
+    .references(() => roles.roleId),
+  status: text("status", { enum: ["pending", "accepted", "rejected"] })
+    .notNull()
+    .default("pending"),
+  expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
     .notNull(),

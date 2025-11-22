@@ -7,7 +7,6 @@ import { DIContainer } from "../di-container";
 import { Workspace } from "../domain/entities";
 import { WorkspaceId, WorkspaceName, UserId } from "../domain/value-object";
 import { createAuth } from "../lib/auth";
-import { injectAuth } from "../middleware";
 
 const app = new Hono<{
   Bindings: CloudflareBindings;
@@ -38,8 +37,6 @@ const updateWorkspaceInputSchema = z.object({
 });
 
 export const workspaceRouter = app
-  .use("*", injectAuth)
-
   .post("/", zValidator("json", createWorkspaceInputSchema), async (c) => {
     const { workspaceId, name } = c.req.valid("json");
     const workspaceService = c.get("workspaceService");
