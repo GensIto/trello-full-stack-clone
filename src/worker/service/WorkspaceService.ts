@@ -1,14 +1,14 @@
 import { Workspace, WorkspaceMembership } from "../domain/entities";
-import { MembershipId, RoleId, WorkspaceId } from "../domain/value-object";
+import { WorkspaceId } from "../domain/value-object";
 import { IWorkspaceMembershipsRepository } from "../infrastructure/WorkspaceMembershipsRepository";
 import { IWorkspaceRepository } from "../infrastructure/WorkspaceRepository";
 import { DrizzleDb } from "../types";
 
 export interface IWorkspaceService {
-  findWorkspaceById(id: string): Promise<Workspace>;
+  findWorkspaceById(id: WorkspaceId): Promise<Workspace>;
   createWorkspace(workspace: Workspace): Promise<Workspace>;
   updateWorkspace(workspace: Workspace): Promise<Workspace>;
-  deleteWorkspace(id: string): Promise<void>;
+  deleteWorkspace(id: WorkspaceId): Promise<void>;
 }
 
 export class WorkspaceService implements IWorkspaceService {
@@ -18,21 +18,22 @@ export class WorkspaceService implements IWorkspaceService {
     private db: DrizzleDb
   ) {}
 
-  async findWorkspaceById(id: string): Promise<Workspace> {
-    return this.workspaceRepository.findById(WorkspaceId.of(id));
+  async findWorkspaceById(id: WorkspaceId): Promise<Workspace> {
+    return this.workspaceRepository.findById(id);
   }
 
   async createWorkspace(workspace: Workspace): Promise<Workspace> {
-    return await this.db.transaction(async () => {
-      const createdWorkspace = await this.workspaceRepository.create(workspace);
-
-      const membership = WorkspaceMembership.of(
-        MembershipId.of(crypto.randomUUID()),
-        createdWorkspace.workspaceId,
-        workspace.ownerUserId,
-        RoleId.OWNER
+    return await this.db.transaction(async (tx) => {
+      const createdWorkspace = await this.workspaceRepository.create(
+        workspace,
+        tx
       );
-      await this.workspaceMemberships.create(membership);
+
+      const membership = WorkspaceMembership.createOwnerMembership(
+        createdWorkspace.workspaceId,
+        createdWorkspace.ownerUserId
+      );
+      await this.workspaceMemberships.create(membership, tx);
 
       return createdWorkspace;
     });
@@ -42,7 +43,7 @@ export class WorkspaceService implements IWorkspaceService {
     return this.workspaceRepository.update(workspace);
   }
 
-  async deleteWorkspace(id: string): Promise<void> {
-    return this.workspaceRepository.delete(WorkspaceId.of(id));
+  async deleteWorkspace(id: WorkspaceId): Promise<void> {
+    return this.workspaceRepository.delete(id);
   }
 }

@@ -1,5 +1,11 @@
 import { z } from "zod";
-import { MembershipId, WorkspaceId, UserId, RoleId } from "../value-object";
+import {
+  MembershipId,
+  WorkspaceId,
+  UserId,
+  RoleId,
+  MembershipStatus,
+} from "../value-object";
 
 const workspaceMembershipSchema = z.object({
   membershipId: z.custom<MembershipId>(
@@ -11,6 +17,10 @@ const workspaceMembershipSchema = z.object({
     "Invalid workspace ID"
   ),
   userId: z.custom<UserId>((val) => val instanceof UserId, "Invalid user ID"),
+  status: z.custom<MembershipStatus>(
+    (val) => val instanceof MembershipStatus,
+    "Invalid membership status"
+  ),
   roleId: z.custom<RoleId>((val) => val instanceof RoleId, "Invalid role ID"),
 });
 
@@ -19,6 +29,7 @@ export class WorkspaceMembership {
     public readonly membershipId: MembershipId,
     public readonly workspaceId: WorkspaceId,
     public readonly userId: UserId,
+    public readonly status: MembershipStatus,
     public readonly roleId: RoleId
   ) {}
 
@@ -26,18 +37,21 @@ export class WorkspaceMembership {
     membershipId: MembershipId,
     workspaceId: WorkspaceId,
     userId: UserId,
+    status: MembershipStatus,
     roleId: RoleId
   ): WorkspaceMembership {
     const validated = workspaceMembershipSchema.parse({
       membershipId,
       workspaceId,
       userId,
+      status,
       roleId,
     });
     return new WorkspaceMembership(
       validated.membershipId,
       validated.workspaceId,
       validated.userId,
+      validated.status,
       validated.roleId
     );
   }
@@ -46,6 +60,7 @@ export class WorkspaceMembership {
     membershipId: MembershipId,
     workspaceId: WorkspaceId,
     userId: UserId,
+    status: MembershipStatus,
     roleId: RoleId
   ):
     | { success: true; value: WorkspaceMembership }
@@ -54,6 +69,7 @@ export class WorkspaceMembership {
       membershipId,
       workspaceId,
       userId,
+      status,
       roleId,
     });
     if (result.success) {
@@ -63,11 +79,51 @@ export class WorkspaceMembership {
           result.data.membershipId,
           result.data.workspaceId,
           result.data.userId,
+          result.data.status,
           result.data.roleId
         ),
       };
     }
     return { success: false, error: result.error.message };
+  }
+
+  static createOwnerMembership(
+    workspaceId: WorkspaceId,
+    userId: UserId
+  ): WorkspaceMembership {
+    return new WorkspaceMembership(
+      MembershipId.of(crypto.randomUUID()),
+      workspaceId,
+      userId,
+      MembershipStatus.of("joined"),
+      RoleId.OWNER
+    );
+  }
+
+  static createAdminMembership(
+    workspaceId: WorkspaceId,
+    userId: UserId
+  ): WorkspaceMembership {
+    return new WorkspaceMembership(
+      MembershipId.of(crypto.randomUUID()),
+      workspaceId,
+      userId,
+      MembershipStatus.of("invited"),
+      RoleId.MEMBER
+    );
+  }
+
+  static createMemberMembership(
+    workspaceId: WorkspaceId,
+    userId: UserId
+  ): WorkspaceMembership {
+    return new WorkspaceMembership(
+      MembershipId.of(crypto.randomUUID()),
+      workspaceId,
+      userId,
+      MembershipStatus.of("invited"),
+      RoleId.MEMBER
+    );
   }
 
   belongsToWorkspace(workspaceId: WorkspaceId): boolean {

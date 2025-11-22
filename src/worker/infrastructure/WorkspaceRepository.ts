@@ -2,11 +2,11 @@ import { eq } from "drizzle-orm";
 import { workspaces } from "../db/workspace-schema";
 import { Workspace } from "../domain/entities";
 import { UserId, WorkspaceId, WorkspaceName } from "../domain/value-object";
-import { DrizzleDb } from "../types";
+import { DrizzleDb, DrizzleTransaction } from "../types";
 
 export interface IWorkspaceRepository {
   findById(id: WorkspaceId): Promise<Workspace>;
-  create(workspace: Workspace): Promise<Workspace>;
+  create(workspace: Workspace, tx: DrizzleTransaction): Promise<Workspace>;
   update(workspace: Workspace): Promise<Workspace>;
   delete(id: WorkspaceId): Promise<void>;
 }
@@ -32,8 +32,10 @@ export class WorkspaceRepository implements IWorkspaceRepository {
     );
   }
 
-  async create(workspace: Workspace): Promise<Workspace> {
-    const result = await this.db
+  async create(workspace: Workspace, tx?: DrizzleTransaction): Promise<Workspace> {
+    const db = tx ?? this.db;
+
+    const result = await db
       .insert(workspaces)
       .values(workspace.toJson())
       .returning()

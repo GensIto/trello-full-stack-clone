@@ -3,18 +3,20 @@ import { workspaceMemberships } from "../db/workspace-schema";
 import { WorkspaceMembership } from "../domain/entities";
 import {
   MembershipId,
+  MembershipStatus,
   RoleId,
   UserId,
   WorkspaceId,
 } from "../domain/value-object";
-import { DrizzleDb } from "../types";
+import { DrizzleDb, DrizzleTransaction } from "../types";
 
 export interface IWorkspaceMembershipsRepository {
   findById(id: MembershipId): Promise<WorkspaceMembership>;
   findByWorkspaceId(workspaceId: WorkspaceId): Promise<WorkspaceMembership[]>;
   findByUserId(userId: UserId): Promise<WorkspaceMembership>;
   create(
-    workspaceMembership: WorkspaceMembership
+    workspaceMembership: WorkspaceMembership,
+    tx: DrizzleTransaction
   ): Promise<WorkspaceMembership>;
   update(
     workspaceMembership: WorkspaceMembership
@@ -41,6 +43,7 @@ export class WorkspaceMembershipsRepository
       MembershipId.of(workspaceMembership.membershipId),
       WorkspaceId.of(workspaceMembership.workspaceId),
       UserId.of(workspaceMembership.userId),
+      MembershipStatus.of(workspaceMembership.status),
       RoleId.of(workspaceMembership.roleId)
     );
   }
@@ -57,6 +60,7 @@ export class WorkspaceMembershipsRepository
         MembershipId.of(workspaceMembership.membershipId),
         WorkspaceId.of(workspaceMembership.workspaceId),
         UserId.of(workspaceMembership.userId),
+        MembershipStatus.of(workspaceMembership.status),
         RoleId.of(workspaceMembership.roleId)
       )
     );
@@ -76,13 +80,16 @@ export class WorkspaceMembershipsRepository
       MembershipId.of(result.membershipId),
       WorkspaceId.of(result.workspaceId),
       UserId.of(result.userId),
+      MembershipStatus.of(result.status),
       RoleId.of(result.roleId)
     );
   }
   async create(
-    workspaceMembership: WorkspaceMembership
+    workspaceMembership: WorkspaceMembership,
+    tx?: DrizzleTransaction
   ): Promise<WorkspaceMembership> {
-    const result = await this.db
+    const db = tx ?? this.db;
+    const result = await db
       .insert(workspaceMemberships)
       .values({
         membershipId: workspaceMembership.membershipId.toString(),
@@ -99,6 +106,7 @@ export class WorkspaceMembershipsRepository
       MembershipId.of(result.membershipId),
       WorkspaceId.of(result.workspaceId),
       UserId.of(result.userId),
+      MembershipStatus.of(result.status),
       RoleId.of(result.roleId)
     );
   }
@@ -125,6 +133,7 @@ export class WorkspaceMembershipsRepository
       MembershipId.of(result.membershipId),
       WorkspaceId.of(result.workspaceId),
       UserId.of(result.userId),
+      MembershipStatus.of(result.status),
       RoleId.of(result.roleId)
     );
   }

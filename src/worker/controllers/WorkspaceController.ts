@@ -58,7 +58,9 @@ export const workspaceRouter = app
   .get("/:id", zValidator("param", findWorkspaceByIdInputSchema), async (c) => {
     const { id } = c.req.valid("param");
     const workspaceService = c.get("workspaceService");
-    const workspace = await workspaceService.findWorkspaceById(id);
+    const workspace = await workspaceService.findWorkspaceById(
+      WorkspaceId.of(id)
+    );
 
     return c.json(workspace.toJson());
   })
@@ -70,12 +72,14 @@ export const workspaceRouter = app
       const workspaceService = c.get("workspaceService");
       const userId = c.get("user").id;
 
-      const workspace = await workspaceService.findWorkspaceById(id);
+      const workspace = await workspaceService.findWorkspaceById(
+        WorkspaceId.of(id)
+      );
       if (!workspace.isOwnedBy(UserId.of(userId))) {
         return c.json({ error: "Unauthorized" }, 401);
       }
 
-      await workspaceService.deleteWorkspace(id);
+      await workspaceService.deleteWorkspace(WorkspaceId.of(id));
       return c.json({ message: "Workspace deleted" });
     }
   )
@@ -89,8 +93,9 @@ export const workspaceRouter = app
 
       const userId = c.get("user").id;
 
-      const workspaceToUpdate =
-        await workspaceService.findWorkspaceById(workspaceId);
+      const workspaceToUpdate = await workspaceService.findWorkspaceById(
+        WorkspaceId.of(workspaceId)
+      );
       if (!workspaceToUpdate.isOwnedBy(UserId.of(userId))) {
         return c.json({ error: "Unauthorized" }, 401);
       }

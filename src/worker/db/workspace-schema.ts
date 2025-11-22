@@ -29,7 +29,14 @@ export const workspaceMemberships = sqliteTable("workspace_memberships", {
   roleId: integer("role_id")
     .notNull()
     .references(() => roles.roleId),
+  status: text("status", { enum: ["invited", "joined"] })
+    .notNull()
+    .default("invited"),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    .notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    .$onUpdate(() => sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
     .notNull(),
 });

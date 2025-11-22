@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const membershipIdSchema = z.string().uuid("Invalid membership ID format");
+const membershipIdSchema = z.uuid("Invalid membership ID format");
 
 export class MembershipId {
   private constructor(private readonly _value: string) {}
