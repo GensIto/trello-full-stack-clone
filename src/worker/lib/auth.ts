@@ -1,6 +1,7 @@
 import { betterAuth, env } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { DrizzleDb } from "../types";
+import * as schema from "../db/schema";
 
 // Better Authインスタンスのキャッシュ
 // WeakMapを使用することで、D1Databaseが不要になれば自動的にGCされる
@@ -20,6 +21,13 @@ export const createAuth = (db: DrizzleDb) => {
     },
     database: drizzleAdapter(db, {
       provider: "sqlite",
+      schema: {
+        ...schema,
+        user: schema.users,
+        session: schema.sessions,
+        account: schema.accounts,
+        verification: schema.verifications,
+      },
     }),
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,

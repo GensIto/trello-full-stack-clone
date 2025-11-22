@@ -16,4 +16,4 @@ export const auth = betterAuth({
 
 export default auth;
 
-// npx @better-auth/cli@latest generate --config src/script/auth.js --output src/db/auth-schema.ts
+// npx @better-auth/cli@latest generate --config script/auth.js --output src/worker/db/auth-schema.ts

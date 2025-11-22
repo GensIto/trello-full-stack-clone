@@ -8,6 +8,13 @@
       "when": 1763792823644,
       "tag": "0000_far_mister_sinister",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1763795646800,
+      "tag": "0001_misty_fenris",
+      "breakpoints": true
     }
   ]
 }
