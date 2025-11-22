@@ -5,6 +5,10 @@ const roleIdSchema = z.number().int().positive("Role ID must be positive");
 export class RoleId {
   private constructor(private readonly _value: number) {}
 
+  static readonly OWNER = new RoleId(1);
+  static readonly ADMIN = new RoleId(2);
+  static readonly MEMBER = new RoleId(3);
+
   static of(value: number): RoleId {
     const validated = roleIdSchema.parse(value);
     return new RoleId(validated);
