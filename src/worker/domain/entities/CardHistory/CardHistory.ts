@@ -8,7 +8,7 @@ import {
   CardDescription,
   CardStatus,
   DueDate,
-} from "../value-object";
+} from "../../value-object";
 
 const historyIdSchema = z.string().uuid("Invalid history ID format");
 

@@ -1,2 +1,1 @@
-export * from "./BoardId";
 export * from "./BoardName";

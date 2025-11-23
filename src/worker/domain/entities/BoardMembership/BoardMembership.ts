@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BoardId, MembershipId } from "../value-object";
+import { BoardId, MembershipId } from "../../value-object";
 
 const boardMembershipIdSchema = z.uuid("Invalid board membership ID format");
 

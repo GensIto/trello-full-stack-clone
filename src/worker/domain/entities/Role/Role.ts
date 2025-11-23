@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { RoleId, RoleName } from "../value-object";
+import { RoleId, RoleName } from "../../value-object";
 
 const roleSchema = z.object({
   roleId: z.custom<RoleId>((val) => val instanceof RoleId, "Invalid role ID"),

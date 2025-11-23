@@ -1,3 +1,3 @@
-export { UserId } from "./UserId";
-export { UserName } from "./UserName";
-export { EmailAddress } from "./EmailAddress";
+export * from "./UserId";
+export * from "./EmailAddress";
+export * from "./UserName";

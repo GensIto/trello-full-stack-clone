@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BoardId, WorkspaceId, BoardName } from "../value-object";
+import { BoardId, WorkspaceId, BoardName } from "../../value-object";
 
 const boardSchema = z.object({
   boardId: z.custom<BoardId>(

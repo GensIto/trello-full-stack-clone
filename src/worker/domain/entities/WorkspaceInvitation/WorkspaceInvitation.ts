@@ -6,7 +6,7 @@ import {
   UserId,
   EmailAddress,
   RoleId,
-} from "../value-object";
+} from "../../value-object";
 
 const workspaceInvitationSchema = z.object({
   invitationId: z.custom<InvitationId>(

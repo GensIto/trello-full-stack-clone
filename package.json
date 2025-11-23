@@ -44,6 +44,7 @@
     "typescript": "5.8.3",
     "typescript-eslint": "8.35.0",
     "vite": "6.4.1",
+    "vitest": "4.0.13",
     "wrangler": "4.50.0"
   },
   "scripts": {
@@ -54,6 +55,7 @@
     "dev": "vite",
     "lint": "eslint .",
     "preview": "npm run build && vite preview",
+    "test": "vitest",
     "db:gen": "drizzle-kit generate",
     "db:migrate": "wrangler d1 migrations apply torello-full-stack-clone --local",
     "db:migrate:remote": "wrangler d1 migrations apply torello-full-stack-clone --remote",

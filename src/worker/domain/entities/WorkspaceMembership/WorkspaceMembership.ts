@@ -4,7 +4,7 @@ import {
   WorkspaceId,
   UserId,
   RoleId,
-} from "../value-object";
+} from "../../value-object";
 
 const workspaceMembershipSchema = z.object({
   membershipId: z.custom<MembershipId>(

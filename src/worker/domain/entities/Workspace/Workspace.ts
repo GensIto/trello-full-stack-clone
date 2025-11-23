@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { WorkspaceId, WorkspaceName, UserId } from "../value-object";
+import { WorkspaceId, WorkspaceName, UserId } from "../../value-object";
 
 export const workspaceSchema = z.object({
   workspaceId: z.custom<WorkspaceId>(

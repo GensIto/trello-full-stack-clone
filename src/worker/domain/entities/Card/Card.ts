@@ -5,7 +5,7 @@ import {
   CardStatus,
   DueDate,
   EmailAddress,
-} from "../value-object";
+} from "../../value-object";
 
 export class Card {
   private _id: CardId;

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import { HistoryId } from "./CardHistory";
-import { CardId, MembershipId } from "../value-object";
+import { HistoryId } from "../CardHistory/CardHistory";
+import { CardId, MembershipId } from "../../value-object";
 
 const activityIdSchema = z.uuid("Invalid activity ID format");
 

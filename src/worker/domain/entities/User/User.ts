@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { EmailAddress } from "../value-object";
+import { EmailAddress } from "../../value-object";
 
 const userSchema = z.object({
   userId: z.uuid("Invalid user ID format"),
