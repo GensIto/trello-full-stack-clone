@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { workspaceMemberships } from "../db/workspace-schema";
 import { WorkspaceMembership } from "../domain/entities";
 import {
@@ -13,6 +13,10 @@ export interface IWorkspaceMembershipsRepository {
   findById(id: MembershipId): Promise<WorkspaceMembership>;
   findByWorkspaceId(workspaceId: WorkspaceId): Promise<WorkspaceMembership[]>;
   findByUserId(userId: UserId): Promise<WorkspaceMembership>;
+  findByWorkspaceIdAndUserId(
+    workspaceId: WorkspaceId,
+    userId: UserId
+  ): Promise<WorkspaceMembership | null>;
   create(
     workspaceMembership: WorkspaceMembership,
     tx?: DrizzleTransaction
@@ -72,6 +76,30 @@ export class WorkspaceMembershipsRepository
       throw new Error(
         `Workspace membership with user id ${userId.toString()} not found`
       );
+    }
+    return WorkspaceMembership.of(
+      MembershipId.of(result.membershipId),
+      WorkspaceId.of(result.workspaceId),
+      UserId.of(result.userId),
+      RoleId.of(result.roleId)
+    );
+  }
+  async findByWorkspaceIdAndUserId(
+    workspaceId: WorkspaceId,
+    userId: UserId
+  ): Promise<WorkspaceMembership | null> {
+    const result = await this.db
+      .select()
+      .from(workspaceMemberships)
+      .where(
+        and(
+          eq(workspaceMemberships.workspaceId, workspaceId.toString()),
+          eq(workspaceMemberships.userId, userId.toString())
+        )
+      )
+      .get();
+    if (!result) {
+      return null;
     }
     return WorkspaceMembership.of(
       MembershipId.of(result.membershipId),

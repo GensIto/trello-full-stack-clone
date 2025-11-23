@@ -11,6 +11,10 @@ export interface IWorkspaceMembershipsService {
   getMembersByWorkspace(
     workspaceId: WorkspaceId
   ): Promise<WorkspaceMembership[]>;
+  getMemberByWorkspaceAndUser(
+    workspaceId: WorkspaceId,
+    userId: UserId
+  ): Promise<WorkspaceMembership | null>;
   updateMemberRole(
     workspaceMembership: WorkspaceMembership
   ): Promise<WorkspaceMembership>;
@@ -38,6 +42,16 @@ export class WorkspaceMembershipsService
     workspaceId: WorkspaceId
   ): Promise<WorkspaceMembership[]> {
     return this.workspaceMembershipsRepository.findByWorkspaceId(workspaceId);
+  }
+
+  async getMemberByWorkspaceAndUser(
+    workspaceId: WorkspaceId,
+    userId: UserId
+  ): Promise<WorkspaceMembership | null> {
+    return this.workspaceMembershipsRepository.findByWorkspaceIdAndUserId(
+      workspaceId,
+      userId
+    );
   }
 
   async updateMemberRole(

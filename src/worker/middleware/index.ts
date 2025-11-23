@@ -9,6 +9,8 @@ export const injectDiContainer = async (c: Context, next: Next) => {
   c.set("diContainer", di);
   // Workspace
   c.set("workspaceService", di.get("WorkspaceService"));
+  c.set("workspaceMembershipsService", di.get("WorkspaceMembershipsService"));
+  c.set("boardService", di.get("BoardService"));
   // WorkspaceInvitations
   c.set("workspaceInvitationsService", di.get("WorkspaceInvitationsService"));
 

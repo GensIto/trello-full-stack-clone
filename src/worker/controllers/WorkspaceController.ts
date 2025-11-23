@@ -7,6 +7,7 @@ import { DIContainer } from "../di-container";
 import { Workspace } from "../domain/entities";
 import { WorkspaceId, WorkspaceName, UserId } from "../domain/value-object";
 import { createAuth } from "../lib/auth";
+import { boardRouter } from "./BoardController";
 
 const app = new Hono<{
   Bindings: CloudflareBindings;
@@ -18,74 +19,77 @@ const app = new Hono<{
   };
 }>();
 
-const createWorkspaceInputSchema = z.object({
-  workspaceId: z.uuid(),
-  name: z.string().min(1).max(100),
-});
-
-const findWorkspaceByIdInputSchema = z.object({
-  id: z.string(),
-});
-
-const deleteWorkspaceInputSchema = z.object({
-  id: z.string(),
-});
-
-const updateWorkspaceInputSchema = z.object({
-  workspaceId: z.uuid(),
-  name: z.string().min(1).max(100),
-});
-
 export const workspaceRouter = app
-  .post("/", zValidator("json", createWorkspaceInputSchema), async (c) => {
-    const { workspaceId, name } = c.req.valid("json");
-    const workspaceService = c.get("workspaceService");
-
-    const userId = c.get("user").id;
-
-    const workspace = await workspaceService.createWorkspace(
-      Workspace.of(
-        WorkspaceId.of(workspaceId),
-        WorkspaceName.of(name),
-        UserId.of(userId)
-      )
-    );
-    return c.json(workspace.toJson());
-  })
-  .get("/:id", zValidator("param", findWorkspaceByIdInputSchema), async (c) => {
-    const { id } = c.req.valid("param");
-    const workspaceService = c.get("workspaceService");
-    const workspace = await workspaceService.findWorkspaceById(
-      WorkspaceId.of(id)
-    );
-
-    return c.json(workspace.toJson());
-  })
-  .delete(
-    "/:id",
-    zValidator("param", deleteWorkspaceInputSchema),
+  .post(
+    "/",
+    zValidator(
+      "json",
+      z.object({
+        workspaceId: z.uuid(),
+        name: z.string().min(1).max(100),
+      })
+    ),
     async (c) => {
-      const { id } = c.req.valid("param");
+      const { workspaceId, name } = c.req.valid("json");
+      const workspaceService = c.get("workspaceService");
+
+      const userId = c.get("user").id;
+
+      const workspace = await workspaceService.createWorkspace(
+        Workspace.of(
+          WorkspaceId.of(workspaceId),
+          WorkspaceName.of(name),
+          UserId.of(userId)
+        )
+      );
+      return c.json(workspace.toJson());
+    }
+  )
+  .get(
+    "/:workspaceId",
+    zValidator("param", z.object({ workspaceId: z.uuid() })),
+    async (c) => {
+      const { workspaceId } = c.req.valid("param");
+      const workspaceService = c.get("workspaceService");
+      const workspace = await workspaceService.findWorkspaceById(
+        WorkspaceId.of(workspaceId)
+      );
+
+      return c.json(workspace.toJson());
+    }
+  )
+  .delete(
+    "/:workspaceId",
+    zValidator("param", z.object({ workspaceId: z.uuid() })),
+    async (c) => {
+      const { workspaceId } = c.req.valid("param");
       const workspaceService = c.get("workspaceService");
       const userId = c.get("user").id;
 
       const workspace = await workspaceService.findWorkspaceById(
-        WorkspaceId.of(id)
+        WorkspaceId.of(workspaceId)
       );
       if (!workspace.isOwnedBy(UserId.of(userId))) {
         return c.json({ error: "Unauthorized" }, 401);
       }
 
-      await workspaceService.deleteWorkspace(WorkspaceId.of(id));
+      await workspaceService.deleteWorkspace(WorkspaceId.of(workspaceId));
       return c.json({ message: "Workspace deleted" });
     }
   )
   .put(
-    "/:id",
-    zValidator("param", findWorkspaceByIdInputSchema),
-    zValidator("json", updateWorkspaceInputSchema),
+    "/:workspaceId",
+    zValidator("param", z.object({ workspaceId: z.uuid() })),
+    zValidator(
+      "json",
+      z.object({
+        workspaceId: z.uuid(),
+        name: z.string().min(1).max(100),
+      })
+    ),
     async (c) => {
-      const { workspaceId, name } = c.req.valid("json");
+      const { workspaceId } = c.req.valid("param");
+      const { name } = c.req.valid("json");
       const workspaceService = c.get("workspaceService");
 
       const userId = c.get("user").id;
@@ -107,4 +111,5 @@ export const workspaceRouter = app
 
       return c.json(workspace.toJson());
     }
-  );
+  )
+  .route("/:workspaceId/boards", boardRouter);

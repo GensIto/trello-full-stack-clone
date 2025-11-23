@@ -25,7 +25,6 @@ const app = new Hono<{
   .use("/workspaces/*", injectAuth)
   .route("/invitations", workspaceInvitationsRouter)
   .route("/workspaces", workspaceRouter);
-
 export type AppType = typeof app;
 
 export default app;

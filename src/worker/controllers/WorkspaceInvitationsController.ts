@@ -23,47 +23,40 @@ const app = new Hono<{
   };
 }>();
 
-const createInvitationInputSchema = z.object({
-  workspaceId: z.uuid(),
-  invitedEmail: z.string().email(),
-  roleId: z.number(),
-});
-
-const acceptInvitationInputSchema = z.object({
-  invitationId: z.uuid(),
-});
-
-const rejectInvitationInputSchema = z.object({
-  invitationId: z.uuid(),
-});
-
-const deleteInvitationInputSchema = z.object({
-  invitationId: z.uuid(),
-});
-
 export const workspaceInvitationsRouter = app
-  .post("/", zValidator("json", createInvitationInputSchema), async (c) => {
-    // 招待を作成
-    const { workspaceId, invitedEmail, roleId } = c.req.valid("json");
-    const workspaceInvitationsService = c.get("workspaceInvitationsService");
-    const userId = c.get("user").id;
+  .post(
+    "/",
+    zValidator(
+      "json",
+      z.object({
+        workspaceId: z.uuid(),
+        invitedEmail: z.email(),
+        roleId: z.number(),
+      })
+    ),
+    async (c) => {
+      // 招待を作成
+      const { workspaceId, invitedEmail, roleId } = c.req.valid("json");
+      const workspaceInvitationsService = c.get("workspaceInvitationsService");
+      const userId = c.get("user").id;
 
-    try {
-      const invitation = await workspaceInvitationsService.createInvitation(
-        WorkspaceId.of(workspaceId),
-        EmailAddress.of(invitedEmail),
-        UserId.of(userId),
-        RoleId.of(roleId)
-      );
+      try {
+        const invitation = await workspaceInvitationsService.createInvitation(
+          WorkspaceId.of(workspaceId),
+          EmailAddress.of(invitedEmail),
+          UserId.of(userId),
+          RoleId.of(roleId)
+        );
 
-      return c.json(invitation.toJson(), 201);
-    } catch (error) {
-      return c.json(
-        { error: error instanceof Error ? error.message : "Unknown error" },
-        400
-      );
+        return c.json(invitation.toJson(), 201);
+      } catch (error) {
+        return c.json(
+          { error: error instanceof Error ? error.message : "Unknown error" },
+          400
+        );
+      }
     }
-  })
+  )
   .get("/", async (c) => {
     // 自分宛の招待一覧を取得
     const workspaceInvitationsService = c.get("workspaceInvitationsService");
@@ -85,7 +78,12 @@ export const workspaceInvitationsRouter = app
   })
   .post(
     "/accept",
-    zValidator("json", acceptInvitationInputSchema),
+    zValidator(
+      "json",
+      z.object({
+        invitationId: z.uuid(),
+      })
+    ),
     async (c) => {
       // 招待を受諾
       const { invitationId } = c.req.valid("json");
@@ -109,7 +107,12 @@ export const workspaceInvitationsRouter = app
   )
   .post(
     "/reject",
-    zValidator("json", rejectInvitationInputSchema),
+    zValidator(
+      "json",
+      z.object({
+        invitationId: z.uuid(),
+      })
+    ),
     async (c) => {
       // 招待を拒否
       const { invitationId } = c.req.valid("json");
@@ -133,7 +136,12 @@ export const workspaceInvitationsRouter = app
   // 招待を削除
   .delete(
     "/:invitationId",
-    zValidator("param", deleteInvitationInputSchema),
+    zValidator(
+      "param",
+      z.object({
+        invitationId: z.uuid(),
+      })
+    ),
     async (c) => {
       const { invitationId } = c.req.valid("param");
       const workspaceInvitationsService = c.get("workspaceInvitationsService");

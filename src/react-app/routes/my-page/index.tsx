@@ -24,6 +24,7 @@ function MyPage() {
     const response = await client.api.invitations.accept.$post({
       json: { invitationId },
     });
+
     const data = await response.json();
     return data;
   };
