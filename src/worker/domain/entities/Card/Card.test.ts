@@ -6,7 +6,7 @@ import {
   CardDescription,
   CardStatus,
   DueDate,
-  EmailAddress,
+  MembershipId,
 } from "../../value-object";
 
 describe("Card", () => {
@@ -15,17 +15,19 @@ describe("Card", () => {
   const validDescription = CardDescription.of("This is a test card");
   const validStatus = CardStatus.todo();
   const validDueDate = DueDate.of(new Date("2025-12-31T23:59:59Z"));
-  const validAssignee = EmailAddress.of("assignee@example.com");
+  const validAssigneeMembershipId = MembershipId.of(
+    "550e8400-e29b-41d4-a716-446655440000"
+  );
 
-  describe("create", () => {
+  describe("of", () => {
     it("有効なCardエンティティを作成できること", () => {
-      const card = Card.create(
+      const card = Card.of(
         validCardId,
         validTitle,
         validDescription,
         validStatus,
         validDueDate,
-        validAssignee
+        validAssigneeMembershipId
       );
 
       expect(card.id).toBe(validCardId);
@@ -33,37 +35,37 @@ describe("Card", () => {
       expect(card.description).toBe(validDescription);
       expect(card.status).toBe(validStatus);
       expect(card.dueDate).toBe(validDueDate);
-      expect(card.assignee).toBe(validAssignee);
+      expect(card.assigneeMembershipId).toBe(validAssigneeMembershipId);
     });
 
     it("異なるステータスでカードを作成できること", () => {
-      const todoCard = Card.create(
+      const todoCard = Card.of(
         validCardId,
         validTitle,
         validDescription,
         CardStatus.todo(),
         validDueDate,
-        validAssignee
+        validAssigneeMembershipId
       );
       expect(todoCard.status.isTodo()).toBe(true);
 
-      const inProgressCard = Card.create(
+      const inProgressCard = Card.of(
         validCardId,
         validTitle,
         validDescription,
         CardStatus.inProgress(),
         validDueDate,
-        validAssignee
+        validAssigneeMembershipId
       );
       expect(inProgressCard.status.isInProgress()).toBe(true);
 
-      const doneCard = Card.create(
+      const doneCard = Card.of(
         validCardId,
         validTitle,
         validDescription,
         CardStatus.done(),
         validDueDate,
-        validAssignee
+        validAssigneeMembershipId
       );
       expect(doneCard.status.isDone()).toBe(true);
     });
@@ -71,77 +73,78 @@ describe("Card", () => {
 
   describe("changeStatus", () => {
     it("todoからの有効なステータス遷移を許可すること", () => {
-      const card = Card.create(
+      const card = Card.of(
         validCardId,
         validTitle,
         validDescription,
         CardStatus.todo(),
         validDueDate,
-        validAssignee
+        validAssigneeMembershipId
       );
 
-      card.changeStatus(CardStatus.inProgress());
-      expect(card.status.isInProgress()).toBe(true);
+      const updatedCard = card.changeStatus(CardStatus.inProgress());
+      expect(updatedCard.status.isInProgress()).toBe(true);
+      expect(card.status.isTodo()).toBe(true); // 元のカードは不変
 
-      const card2 = Card.create(
+      const card2 = Card.of(
         validCardId,
         validTitle,
         validDescription,
         CardStatus.todo(),
         validDueDate,
-        validAssignee
+        validAssigneeMembershipId
       );
-      card2.changeStatus(CardStatus.done());
-      expect(card2.status.isDone()).toBe(true);
+      const updatedCard2 = card2.changeStatus(CardStatus.done());
+      expect(updatedCard2.status.isDone()).toBe(true);
     });
 
     it("in_progressからの有効なステータス遷移を許可すること", () => {
-      const card = Card.create(
+      const card = Card.of(
         validCardId,
         validTitle,
         validDescription,
         CardStatus.inProgress(),
         validDueDate,
-        validAssignee
+        validAssigneeMembershipId
       );
 
-      card.changeStatus(CardStatus.done());
-      expect(card.status.isDone()).toBe(true);
+      const updatedCard = card.changeStatus(CardStatus.done());
+      expect(updatedCard.status.isDone()).toBe(true);
 
-      const card2 = Card.create(
+      const card2 = Card.of(
         validCardId,
         validTitle,
         validDescription,
         CardStatus.inProgress(),
         validDueDate,
-        validAssignee
+        validAssigneeMembershipId
       );
-      card2.changeStatus(CardStatus.todo());
-      expect(card2.status.isTodo()).toBe(true);
+      const updatedCard2 = card2.changeStatus(CardStatus.todo());
+      expect(updatedCard2.status.isTodo()).toBe(true);
     });
 
     it("doneからの有効なステータス遷移を許可すること", () => {
-      const card = Card.create(
+      const card = Card.of(
         validCardId,
         validTitle,
         validDescription,
         CardStatus.done(),
         validDueDate,
-        validAssignee
+        validAssigneeMembershipId
       );
 
-      card.changeStatus(CardStatus.inProgress());
-      expect(card.status.isInProgress()).toBe(true);
+      const updatedCard = card.changeStatus(CardStatus.inProgress());
+      expect(updatedCard.status.isInProgress()).toBe(true);
     });
 
     it("無効なステータス遷移でエラーをスローすること", () => {
-      const card = Card.create(
+      const card = Card.of(
         validCardId,
         validTitle,
         validDescription,
         CardStatus.done(),
         validDueDate,
-        validAssignee
+        validAssigneeMembershipId
       );
 
       expect(() => {
@@ -152,59 +155,62 @@ describe("Card", () => {
 
   describe("start", () => {
     it("ステータスをin_progressに変更できること", () => {
-      const card = Card.create(
+      const card = Card.of(
         validCardId,
         validTitle,
         validDescription,
         CardStatus.todo(),
         validDueDate,
-        validAssignee
+        validAssigneeMembershipId
       );
 
-      card.start();
-      expect(card.status.isInProgress()).toBe(true);
+      const startedCard = card.start();
+      expect(startedCard.status.isInProgress()).toBe(true);
+      expect(card.status.isTodo()).toBe(true); // 元のカードは不変
     });
   });
 
   describe("complete", () => {
     it("ステータスをdoneに変更できること", () => {
-      const card = Card.create(
+      const card = Card.of(
         validCardId,
         validTitle,
         validDescription,
         CardStatus.inProgress(),
         validDueDate,
-        validAssignee
+        validAssigneeMembershipId
       );
 
-      card.complete();
-      expect(card.status.isDone()).toBe(true);
+      const completedCard = card.complete();
+      expect(completedCard.status.isDone()).toBe(true);
+      expect(card.status.isInProgress()).toBe(true); // 元のカードは不変
     });
   });
 
   describe("reopen", () => {
     it("完了したカードを再開できること", () => {
-      const card = Card.create(
+      const card = Card.of(
         validCardId,
         validTitle,
         validDescription,
         CardStatus.done(),
         validDueDate,
-        validAssignee
+        validAssigneeMembershipId
       );
 
-      card.reopen();
-      expect(card.status.isInProgress()).toBe(true);
+      const reopenedCard = card.reopen();
+      expect(reopenedCard.status.isInProgress()).toBe(true);
+      expect(card.status.isDone()).toBe(true); // 元のカードは不変
     });
 
     it("完了していないカードを再開しようとした場合にエラーをスローすること", () => {
-      const card = Card.create(
+      const card = Card.of(
         validCardId,
         validTitle,
         validDescription,
         CardStatus.todo(),
         validDueDate,
-        validAssignee
+        validAssigneeMembershipId
       );
 
       expect(() => {
@@ -215,89 +221,94 @@ describe("Card", () => {
 
   describe("updateTitle", () => {
     it("カードタイトルを更新できること", () => {
-      const card = Card.create(
+      const card = Card.of(
         validCardId,
         validTitle,
         validDescription,
         validStatus,
         validDueDate,
-        validAssignee
+        validAssigneeMembershipId
       );
 
       const newTitle = CardTitle.of("Updated Title");
-      card.updateTitle(newTitle);
+      const updatedCard = card.updateTitle(newTitle);
 
-      expect(card.title).toBe(newTitle);
-      expect(card.title.value).toBe("Updated Title");
+      expect(updatedCard.title).toBe(newTitle);
+      expect(updatedCard.title.value).toBe("Updated Title");
+      expect(card.title).toBe(validTitle); // 元のカードは不変
     });
   });
 
   describe("updateDescription", () => {
     it("カード説明を更新できること", () => {
-      const card = Card.create(
+      const card = Card.of(
         validCardId,
         validTitle,
         validDescription,
         validStatus,
         validDueDate,
-        validAssignee
+        validAssigneeMembershipId
       );
 
       const newDescription = CardDescription.of("Updated description");
-      card.updateDescription(newDescription);
+      const updatedCard = card.updateDescription(newDescription);
 
-      expect(card.description).toBe(newDescription);
-      expect(card.description.value).toBe("Updated description");
+      expect(updatedCard.description).toBe(newDescription);
+      expect(updatedCard.description.value).toBe("Updated description");
+      expect(card.description).toBe(validDescription); // 元のカードは不変
     });
   });
 
   describe("assignTo", () => {
     it("担当者を変更できること", () => {
-      const card = Card.create(
+      const card = Card.of(
         validCardId,
         validTitle,
         validDescription,
         validStatus,
         validDueDate,
-        validAssignee
+        validAssigneeMembershipId
       );
 
-      const newAssignee = EmailAddress.of("newassignee@example.com");
-      card.assignTo(newAssignee);
+      const newMembershipId = MembershipId.of(
+        "660e8400-e29b-41d4-a716-446655440001"
+      );
+      const assignedCard = card.assignTo(newMembershipId);
 
-      expect(card.assignee).toBe(newAssignee);
-      expect(card.assignee.value).toBe("newassignee@example.com");
+      expect(assignedCard.assigneeMembershipId).toBe(newMembershipId);
+      expect(card.assigneeMembershipId).toBe(validAssigneeMembershipId); // 元のカードは不変
     });
   });
 
   describe("changeDueDate", () => {
     it("期日を変更できること", () => {
-      const card = Card.create(
+      const card = Card.of(
         validCardId,
         validTitle,
         validDescription,
         validStatus,
         validDueDate,
-        validAssignee
+        validAssigneeMembershipId
       );
 
       const newDueDate = DueDate.of(new Date("2026-01-31T23:59:59Z"));
-      card.changeDueDate(newDueDate);
+      const updatedCard = card.changeDueDate(newDueDate);
 
-      expect(card.dueDate).toBe(newDueDate);
+      expect(updatedCard.dueDate).toBe(newDueDate);
+      expect(card.dueDate).toBe(validDueDate); // 元のカードは不変
     });
   });
 
   describe("isOverdue", () => {
     it("完了していない期限切れカードでtrueを返すこと", () => {
       const pastDueDate = DueDate.of(new Date("2020-01-01T00:00:00Z"));
-      const card = Card.create(
+      const card = Card.of(
         validCardId,
         validTitle,
         validDescription,
         CardStatus.todo(),
         pastDueDate,
-        validAssignee
+        validAssigneeMembershipId
       );
 
       expect(card.isOverdue()).toBe(true);
@@ -305,13 +316,13 @@ describe("Card", () => {
 
     it("期限切れでも完了しているカードでfalseを返すこと", () => {
       const pastDueDate = DueDate.of(new Date("2020-01-01T00:00:00Z"));
-      const card = Card.create(
+      const card = Card.of(
         validCardId,
         validTitle,
         validDescription,
         CardStatus.done(),
         pastDueDate,
-        validAssignee
+        validAssigneeMembershipId
       );
 
       expect(card.isOverdue()).toBe(false);
@@ -319,13 +330,13 @@ describe("Card", () => {
 
     it("将来の期日を持つカードでfalseを返すこと", () => {
       const futureDueDate = DueDate.of(new Date("2030-01-01T00:00:00Z"));
-      const card = Card.create(
+      const card = Card.of(
         validCardId,
         validTitle,
         validDescription,
         CardStatus.todo(),
         futureDueDate,
-        validAssignee
+        validAssigneeMembershipId
       );
 
       expect(card.isOverdue()).toBe(false);
@@ -334,33 +345,33 @@ describe("Card", () => {
 
   describe("toJson", () => {
     it("カードをJSONに変換できること", () => {
-      const card = Card.create(
+      const card = Card.of(
         validCardId,
         validTitle,
         validDescription,
         validStatus,
         validDueDate,
-        validAssignee
+        validAssigneeMembershipId
       );
 
       const json = card.toJson();
 
-      expect(json.id).toBe(validCardId.toString());
-      expect(json.title).toBe(validTitle.toString());
-      expect(json.description).toBe(validDescription.toString());
-      expect(json.status).toBe(validStatus.toString());
-      expect(json.assignee).toBe(validAssignee.toString());
+      expect(json.id).toBe(validCardId.value);
+      expect(json.title).toBe(validTitle.value);
+      expect(json.description).toBe(validDescription.value);
+      expect(json.status).toBe(validStatus.value);
+      expect(json.assigneeMembershipId).toBe(validAssigneeMembershipId.value);
       expect(typeof json.dueDate).toBe("string");
     });
 
     it("文字列値を持つプレーンオブジェクトを返すこと", () => {
-      const card = Card.create(
+      const card = Card.of(
         validCardId,
         validTitle,
         validDescription,
         validStatus,
         validDueDate,
-        validAssignee
+        validAssigneeMembershipId
       );
 
       const json = card.toJson();
@@ -370,19 +381,34 @@ describe("Card", () => {
       expect(typeof json.description).toBe("string");
       expect(typeof json.status).toBe("string");
       expect(typeof json.dueDate).toBe("string");
-      expect(typeof json.assignee).toBe("string");
+      expect(typeof json.assigneeMembershipId).toBe("string");
     });
-  });
 
-  describe("immutability", () => {
-    it("読み取り専用アクセスにゲッターを使用すること", () => {
-      const card = Card.create(
+    it("未割り当てカードのJSONでassigneeがnullであること", () => {
+      const card = Card.of(
         validCardId,
         validTitle,
         validDescription,
         validStatus,
         validDueDate,
-        validAssignee
+        null
+      );
+
+      const json = card.toJson();
+
+      expect(json.assigneeMembershipId).toBeNull();
+    });
+  });
+
+  describe("immutability", () => {
+    it("読み取り専用アクセスにゲッターを使用すること", () => {
+      const card = Card.of(
+        validCardId,
+        validTitle,
+        validDescription,
+        validStatus,
+        validDueDate,
+        validAssigneeMembershipId
       );
 
       const originalId = card.id;
@@ -392,22 +418,75 @@ describe("Card", () => {
       expect(card.title).toBe(originalTitle);
     });
 
-    it("ビジネスロジックメソッドを通じてのみ変更を許可すること", () => {
-      const card = Card.create(
+    it("ビジネスロジックメソッドが新しいインスタンスを返すこと", () => {
+      const card = Card.of(
         validCardId,
         validTitle,
         validDescription,
         CardStatus.todo(),
         validDueDate,
-        validAssignee
+        validAssigneeMembershipId
       );
 
       const originalStatus = card.status;
       expect(originalStatus.isTodo()).toBe(true);
 
-      card.start();
-      expect(card.status.isInProgress()).toBe(true);
-      expect(card.status).not.toBe(originalStatus);
+      const startedCard = card.start();
+
+      // 新しいインスタンスが返される
+      expect(startedCard).not.toBe(card);
+      expect(startedCard.status.isInProgress()).toBe(true);
+
+      // 元のカードは変更されていない
+      expect(card.status.isTodo()).toBe(true);
+      expect(card.status).toBe(originalStatus);
+    });
+  });
+
+  describe("isAssigned", () => {
+    it("担当者が割り当てられている場合trueを返すこと", () => {
+      const card = Card.of(
+        validCardId,
+        validTitle,
+        validDescription,
+        validStatus,
+        validDueDate,
+        validAssigneeMembershipId
+      );
+
+      expect(card.isAssigned()).toBe(true);
+    });
+
+    it("担当者が未割り当ての場合falseを返すこと", () => {
+      const card = Card.of(
+        validCardId,
+        validTitle,
+        validDescription,
+        validStatus,
+        validDueDate,
+        null
+      );
+
+      expect(card.isAssigned()).toBe(false);
+    });
+  });
+
+  describe("unassign", () => {
+    it("担当者を解除できること", () => {
+      const card = Card.of(
+        validCardId,
+        validTitle,
+        validDescription,
+        validStatus,
+        validDueDate,
+        validAssigneeMembershipId
+      );
+
+      const unassignedCard = card.unassign();
+
+      expect(unassignedCard.assigneeMembershipId).toBeNull();
+      expect(unassignedCard.isAssigned()).toBe(false);
+      expect(card.assigneeMembershipId).toBe(validAssigneeMembershipId); // 元のカードは不変
     });
   });
 });

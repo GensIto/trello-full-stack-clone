@@ -10,6 +10,8 @@ import { DrizzleDb } from "./types";
 import { WorkspaceInvitationsService } from "./service/WorkspaceInvitationsService";
 import { BoardMembershipsRepository } from "./infrastructure/BoardMembershipsRepository";
 import { BoardMembershipsService } from "./service/BoardMembershipsService";
+import { CardRepository } from "./infrastructure/CardRepository";
+import { CardService } from "./service/CardService";
 
 export type DependencyTypes = {
   // Workspace
@@ -31,6 +33,10 @@ export type DependencyTypes = {
   // BoardMemberships
   BoardMembershipsRepository: BoardMembershipsRepository;
   BoardMembershipsService: BoardMembershipsService;
+
+  // Card
+  CardRepository: CardRepository;
+  CardService: CardService;
 };
 
 export const createContainer = (db: DrizzleDb) => {
@@ -54,6 +60,7 @@ export const createContainer = (db: DrizzleDb) => {
     BoardMembershipsRepository,
     db
   );
+  diContainer.register("CardRepository", CardRepository, db);
 
   // Services
   diContainer.register(
@@ -88,6 +95,10 @@ export const createContainer = (db: DrizzleDb) => {
     BoardMembershipsService,
     diContainer.get("BoardMembershipsRepository")
   );
-
+  diContainer.register(
+    "CardService",
+    CardService,
+    diContainer.get("CardRepository")
+  );
   return diContainer;
 };

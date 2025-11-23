@@ -6,6 +6,7 @@ import { BoardService } from "../service/BoardService";
 import z from "zod";
 import { zValidator } from "@hono/zod-validator";
 import { boardMembershipsRouter } from "./BoardMembershipsController";
+import { cardRouter } from "./CardController";
 
 const app = new Hono<{
   Bindings: CloudflareBindings;
@@ -120,4 +121,5 @@ export const boardRouter = app
       return c.json({ message: "Board deleted" });
     }
   )
-  .route("/:boardId/memberships", boardMembershipsRouter);
+  .route("/:boardId/memberships", boardMembershipsRouter)
+  .route("/:boardId/cards", cardRouter);

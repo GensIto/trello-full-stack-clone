@@ -10,10 +10,13 @@ export const injectDiContainer = async (c: Context, next: Next) => {
   // Workspace
   c.set("workspaceService", di.get("WorkspaceService"));
   c.set("workspaceMembershipsService", di.get("WorkspaceMembershipsService"));
+  // Board
   c.set("boardService", di.get("BoardService"));
+  c.set("boardMembershipsService", di.get("BoardMembershipsService"));
+  // Card
+  c.set("cardService", di.get("CardService"));
   // WorkspaceInvitations
   c.set("workspaceInvitationsService", di.get("WorkspaceInvitationsService"));
-
   return next();
 };
 

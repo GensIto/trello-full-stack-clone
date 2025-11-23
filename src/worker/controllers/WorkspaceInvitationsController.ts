@@ -35,7 +35,6 @@ export const workspaceInvitationsRouter = app
       })
     ),
     async (c) => {
-      // 招待を作成
       const { workspaceId, invitedEmail, roleId } = c.req.valid("json");
       const workspaceInvitationsService = c.get("workspaceInvitationsService");
       const userId = c.get("user").id;
@@ -58,7 +57,6 @@ export const workspaceInvitationsRouter = app
     }
   )
   .get("/", async (c) => {
-    // 自分宛の招待一覧を取得
     const workspaceInvitationsService = c.get("workspaceInvitationsService");
     const userEmail = c.get("user").email;
 
@@ -85,7 +83,6 @@ export const workspaceInvitationsRouter = app
       })
     ),
     async (c) => {
-      // 招待を受諾
       const { invitationId } = c.req.valid("json");
       const workspaceInvitationsService = c.get("workspaceInvitationsService");
       const userId = c.get("user").id;
@@ -114,7 +111,6 @@ export const workspaceInvitationsRouter = app
       })
     ),
     async (c) => {
-      // 招待を拒否
       const { invitationId } = c.req.valid("json");
       const workspaceInvitationsService = c.get("workspaceInvitationsService");
 
@@ -133,7 +129,6 @@ export const workspaceInvitationsRouter = app
     }
   )
 
-  // 招待を削除
   .delete(
     "/:invitationId",
     zValidator(

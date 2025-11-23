@@ -1,50 +1,51 @@
+import z from "zod";
 import {
   CardId,
   CardTitle,
   CardDescription,
   CardStatus,
   DueDate,
-  EmailAddress,
+  MembershipId,
 } from "../../value-object";
 
+const cardSchema = z.object({
+  cardId: z.custom<CardId>((val) => val instanceof CardId, "Invalid card ID"),
+  title: z.custom<CardTitle>(
+    (val) => val instanceof CardTitle,
+    "Invalid card title"
+  ),
+  description: z.custom<CardDescription>(
+    (val) => val instanceof CardDescription,
+    "Invalid card description"
+  ),
+  status: z.custom<CardStatus>(
+    (val) => val instanceof CardStatus,
+    "Invalid card status"
+  ),
+  dueDate: z.custom<DueDate>(
+    (val) => val instanceof DueDate,
+    "Invalid due date"
+  ),
+  assigneeMembershipId: z
+    .custom<MembershipId>(
+      (val) => val instanceof MembershipId,
+      "Invalid assignee membership ID"
+    )
+    .nullable(),
+});
+
 export class Card {
-  private _id: CardId;
-  private _title: CardTitle;
-  private _description: CardDescription;
-  private _status: CardStatus;
-  private _dueDate: DueDate;
-  private _assignee: EmailAddress;
-
   private constructor(
-    id: CardId,
-    title: CardTitle,
-    description: CardDescription,
-    status: CardStatus,
-    dueDate: DueDate,
-    assignee: EmailAddress
-  ) {
-    this._id = id;
-    this._title = title;
-    this._description = description;
-    this._status = status;
-    this._dueDate = dueDate;
-    this._assignee = assignee;
-  }
+    private readonly _cardId: CardId,
+    private readonly _title: CardTitle,
+    private readonly _description: CardDescription,
+    private readonly _status: CardStatus,
+    private readonly _dueDate: DueDate,
+    private readonly _assigneeMembershipId: MembershipId | null
+  ) {}
 
-  static create(
-    id: CardId,
-    title: CardTitle,
-    description: CardDescription,
-    status: CardStatus,
-    dueDate: DueDate,
-    assignee: EmailAddress
-  ): Card {
-    return new Card(id, title, description, status, dueDate, assignee);
-  }
-
-  // ゲッター（外部からは読み取り専用）
   get id(): CardId {
-    return this._id;
+    return this._cardId;
   }
 
   get title(): CardTitle {
@@ -63,69 +64,182 @@ export class Card {
     return this._dueDate;
   }
 
-  get assignee(): EmailAddress {
-    return this._assignee;
+  get assigneeMembershipId(): MembershipId | null {
+    return this._assigneeMembershipId;
   }
 
-  // ビジネスロジック：状態遷移（ビジネスルールを含む）
-  changeStatus(newStatus: CardStatus): void {
+  static of(
+    cardId: CardId,
+    title: CardTitle,
+    description: CardDescription,
+    status: CardStatus,
+    dueDate: DueDate,
+    assigneeMembershipId: MembershipId | null
+  ): Card {
+    const validated = cardSchema.parse({
+      cardId,
+      title,
+      description,
+      status,
+      dueDate,
+      assigneeMembershipId,
+    });
+    return new Card(
+      validated.cardId,
+      validated.title,
+      validated.description,
+      validated.status,
+      validated.dueDate,
+      validated.assigneeMembershipId
+    );
+  }
+
+  static tryOf(
+    cardId: CardId,
+    title: CardTitle,
+    description: CardDescription,
+    status: CardStatus,
+    dueDate: DueDate,
+    assigneeMembershipId: MembershipId | null
+  ): { success: true; value: Card } | { success: false; error: string } {
+    const result = cardSchema.safeParse({
+      cardId,
+      title,
+      description,
+      status,
+      dueDate,
+      assigneeMembershipId,
+    });
+    if (result.success) {
+      return {
+        success: true,
+        value: new Card(
+          result.data.cardId,
+          result.data.title,
+          result.data.description,
+          result.data.status,
+          result.data.dueDate,
+          result.data.assigneeMembershipId
+        ),
+      };
+    }
+    return { success: false, error: result.error.message };
+  }
+
+  changeStatus(newStatus: CardStatus): Card {
     if (!this._status.canTransitionTo(newStatus)) {
       throw new Error(this._status.getTransitionErrorMessage(newStatus));
     }
-    this._status = newStatus;
+    return new Card(
+      this._cardId,
+      this._title,
+      this._description,
+      newStatus,
+      this._dueDate,
+      this._assigneeMembershipId
+    );
   }
 
-  // ビジネスロジック：作業開始
-  start(): void {
-    this.changeStatus(CardStatus.inProgress());
+  start(): Card {
+    return this.changeStatus(CardStatus.inProgress());
   }
 
-  // ビジネスロジック：完了
-  complete(): void {
-    this.changeStatus(CardStatus.done());
+  complete(): Card {
+    return this.changeStatus(CardStatus.done());
   }
 
-  // ビジネスロジック：再開（Doneから戻す）
-  reopen(): void {
+  reopen(): Card {
     if (!this._status.isDone()) {
       throw new Error("Only completed cards can be reopened");
     }
-    this._status = CardStatus.inProgress();
+    return new Card(
+      this._cardId,
+      this._title,
+      this._description,
+      CardStatus.inProgress(),
+      this._dueDate,
+      this._assigneeMembershipId
+    );
   }
 
-  // ビジネスロジック：タイトル更新
-  updateTitle(newTitle: CardTitle): void {
-    this._title = newTitle;
+  updateTitle(newTitle: CardTitle): Card {
+    return new Card(
+      this._cardId,
+      newTitle,
+      this._description,
+      this._status,
+      this._dueDate,
+      this._assigneeMembershipId
+    );
   }
 
-  // ビジネスロジック：説明更新
-  updateDescription(newDescription: CardDescription): void {
-    this._description = newDescription;
+  updateDescription(newDescription: CardDescription): Card {
+    return new Card(
+      this._cardId,
+      this._title,
+      newDescription,
+      this._status,
+      this._dueDate,
+      this._assigneeMembershipId
+    );
   }
 
-  // ビジネスロジック：担当者変更
-  assignTo(assignee: EmailAddress): void {
-    this._assignee = assignee;
+  assignTo(membershipId: MembershipId): Card {
+    return new Card(
+      this._cardId,
+      this._title,
+      this._description,
+      this._status,
+      this._dueDate,
+      membershipId
+    );
   }
 
-  // ビジネスロジック：期限変更
-  changeDueDate(newDueDate: DueDate): void {
-    this._dueDate = newDueDate;
+  unassign(): Card {
+    return new Card(
+      this._cardId,
+      this._title,
+      this._description,
+      this._status,
+      this._dueDate,
+      null
+    );
   }
 
-  // ビジネスロジック：期限切れかどうか
+  changeDueDate(newDueDate: DueDate): Card {
+    return new Card(
+      this._cardId,
+      this._title,
+      this._description,
+      this._status,
+      newDueDate,
+      this._assigneeMembershipId
+    );
+  }
+
+  isAssigned(): boolean {
+    return this._assigneeMembershipId !== null;
+  }
+
   isOverdue(): boolean {
     return !this._status.isDone() && this._dueDate.isOverdue();
   }
 
-  toJson() {
+  toJson(): {
+    id: string;
+    title: string;
+    description: string;
+    status: string;
+    dueDate: string;
+    assigneeMembershipId: string | null;
+  } {
     return {
-      id: this._id.toString(),
-      title: this._title.toString(),
-      description: this._description.toString(),
-      status: this._status.toString(),
+      id: this._cardId.value,
+      title: this._title.value,
+      description: this._description.value,
+      status: this._status.value,
       dueDate: this._dueDate.toJson(),
-      assignee: this._assignee.toString(),
+      assigneeMembershipId: this._assigneeMembershipId?.value ?? null,
     };
   }
 }
