@@ -1,11 +1,12 @@
 import { Workspace, WorkspaceMembership } from "../domain/entities";
-import { WorkspaceId } from "../domain/value-object";
+import { WorkspaceId, WorkspaceName, UserId } from "../domain/value-object";
 import { IWorkspaceMembershipsRepository } from "../infrastructure/WorkspaceMembershipsRepository";
 import { IWorkspaceRepository } from "../infrastructure/WorkspaceRepository";
 import { DrizzleDb } from "../types";
 
 export interface IWorkspaceService {
   findWorkspaceById(id: WorkspaceId): Promise<Workspace>;
+  findWorkspacesByOwnerUserId(ownerUserId: UserId): Promise<Workspace[]>;
   createWorkspace(workspace: Workspace): Promise<Workspace>;
   updateWorkspace(workspace: Workspace): Promise<Workspace>;
   deleteWorkspace(id: WorkspaceId): Promise<void>;
@@ -22,21 +23,32 @@ export class WorkspaceService implements IWorkspaceService {
     return this.workspaceRepository.findById(id);
   }
 
+  async findWorkspacesByOwnerUserId(ownerUserId: UserId): Promise<Workspace[]> {
+    return this.workspaceRepository.findByOwnerUserId(ownerUserId);
+  }
+
   async createWorkspace(workspace: Workspace): Promise<Workspace> {
-    return await this.db.transaction(async (tx) => {
-      const createdWorkspace = await this.workspaceRepository.create(
-        workspace,
-        tx
-      );
+    const membership = WorkspaceMembership.createOwnerMembership(
+      workspace.workspaceId,
+      workspace.ownerUserId
+    );
 
-      const membership = WorkspaceMembership.createOwnerMembership(
-        createdWorkspace.workspaceId,
-        createdWorkspace.ownerUserId
-      );
-      await this.workspaceMemberships.create(membership, tx);
+    const results = await this.db.batch([
+      this.workspaceRepository.createBuilder(workspace),
+      this.workspaceMemberships.createBuilder(membership),
+    ]);
 
-      return createdWorkspace;
-    });
+    const createdWorkspaceResult = results[0];
+    if (!createdWorkspaceResult || createdWorkspaceResult.length === 0) {
+      throw new Error("Failed to create workspace");
+    }
+
+    const createdWorkspace = createdWorkspaceResult[0];
+    return Workspace.of(
+      WorkspaceId.of(createdWorkspace.workspaceId),
+      WorkspaceName.of(createdWorkspace.name),
+      UserId.of(createdWorkspace.ownerUserId)
+    );
   }
 
   async updateWorkspace(workspace: Workspace): Promise<Workspace> {

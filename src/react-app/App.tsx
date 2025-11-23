@@ -5,6 +5,7 @@ import { queryClient } from "./lib/query";
 import { authClient } from "./lib/betterAuth";
 import { AuthUIProvider } from "@daveyplate/better-auth-ui";
 import { Link } from "@tanstack/react-router";
+import { Toaster } from "sonner";
 
 declare module "@tanstack/react-router" {
   interface Register {
@@ -25,6 +26,7 @@ export function App() {
         )}
       >
         <RouterProvider router={router} />
+        <Toaster />
       </AuthUIProvider>
     </QueryClientProvider>
   );

@@ -15,6 +15,7 @@ import {
   BoardMembershipId,
 } from "../domain/entities/BoardMembership";
 import { IBoardMembershipsRepository } from "../infrastructure/BoardMembershipsRepository";
+import { boards, boardMemberships } from "../db/board-schema";
 
 export interface IBoardService {
   findBoardById(workspaceId: string, boardId: string): Promise<Board>;
@@ -61,33 +62,67 @@ export class BoardService implements IBoardService {
     name: string,
     membershipIds: string[]
   ): Promise<Board> {
-    return await this.db.transaction(async (tx) => {
-      const createdBoard = await this.boardRepository.create(
-        WorkspaceId.of(workspaceId),
-        BoardName.of(name),
-        tx
-      );
-
-      for (const membershipId of membershipIds) {
-        const workspaceMembership =
-          await this.workspaceMembershipsRepository.findById(
-            MembershipId.of(membershipId)
-          );
-        if (!workspaceMembership) {
+    // メンバーシップの存在確認
+    const workspaceMemberships = await Promise.all(
+      membershipIds.map(async (membershipId) => {
+        const membership = await this.workspaceMembershipsRepository.findById(
+          MembershipId.of(membershipId)
+        );
+        if (!membership) {
           throw new Error(`Membership with id ${membershipId} not found`);
         }
+        return membership;
+      })
+    );
 
-        const boardMembership = BoardMembership.of(
-          BoardMembershipId.of(crypto.randomUUID()),
-          createdBoard.boardId,
-          workspaceMembership.membershipId
-        );
+    const boardId = BoardId.of(crypto.randomUUID());
+    const boardName = BoardName.of(name);
+    const workspaceIdObj = WorkspaceId.of(workspaceId);
 
-        await this.boardMembershipsRepository.create(boardMembership, tx);
-      }
-
-      return createdBoard;
+    // ボードメンバーシップを作成
+    const boardMembershipValues = workspaceMemberships.map((membership) => {
+      const boardMembership = BoardMembership.of(
+        BoardMembershipId.of(crypto.randomUUID()),
+        boardId,
+        membership.membershipId
+      );
+      return {
+        boardMembershipId: boardMembership.boardMembershipId.toString(),
+        boardId: boardMembership.boardId.toString(),
+        membershipId: boardMembership.membershipId.toString(),
+      };
     });
+
+    // D1のbatch()を使用して複数のクエリを一度に実行
+    const boardInsertQuery = this.db
+      .insert(boards)
+      .values({
+        boardId: boardId.toString(),
+        workspaceId: workspaceIdObj.toString(),
+        name: boardName.toString(),
+      })
+      .returning();
+
+    const boardMembershipQueries = boardMembershipValues.map((values) =>
+      this.db.insert(boardMemberships).values(values)
+    );
+
+    const results = await this.db.batch([
+      boardInsertQuery,
+      ...boardMembershipQueries,
+    ]);
+
+    const createdBoardResult = results[0];
+    if (!createdBoardResult || createdBoardResult.length === 0) {
+      throw new Error("Failed to create board");
+    }
+
+    const createdBoardData = createdBoardResult[0];
+    return Board.of(
+      BoardId.of(createdBoardData.boardId),
+      WorkspaceId.of(createdBoardData.workspaceId),
+      BoardName.of(createdBoardData.name)
+    );
   }
 
   async updateBoard(

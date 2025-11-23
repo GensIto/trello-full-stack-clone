@@ -7,7 +7,7 @@ export const Route = createFileRoute("/auth/sign-in")({
   beforeLoad: async () => {
     const session = await authClient.getSession();
     if (session.data) {
-      throw redirect({ to: "/", replace: true });
+      throw redirect({ to: "/my-page", replace: true });
     }
   },
 });

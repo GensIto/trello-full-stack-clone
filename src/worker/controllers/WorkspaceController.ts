@@ -25,19 +25,18 @@ export const workspaceRouter = app
     zValidator(
       "json",
       z.object({
-        workspaceId: z.uuid(),
         name: z.string().min(1).max(100),
       })
     ),
     async (c) => {
-      const { workspaceId, name } = c.req.valid("json");
+      const { name } = c.req.valid("json");
       const workspaceService = c.get("workspaceService");
 
       const userId = c.get("user").id;
 
       const workspace = await workspaceService.createWorkspace(
         Workspace.of(
-          WorkspaceId.of(workspaceId),
+          WorkspaceId.of(crypto.randomUUID()),
           WorkspaceName.of(name),
           UserId.of(userId)
         )
@@ -45,6 +44,14 @@ export const workspaceRouter = app
       return c.json(workspace.toJson());
     }
   )
+  .get("/", async (c) => {
+    const userId = c.get("user").id;
+    const workspaceService = c.get("workspaceService");
+    const workspaces = await workspaceService.findWorkspacesByOwnerUserId(
+      UserId.of(userId)
+    );
+    return c.json(workspaces.map((workspace) => workspace.toJson()));
+  })
   .get(
     "/:workspaceId",
     zValidator("param", z.object({ workspaceId: z.uuid() })),

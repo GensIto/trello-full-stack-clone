@@ -6,10 +6,16 @@ import {
   UserId,
   EmailAddress,
   RoleId,
+  MembershipId,
 } from "../domain/value-object";
 import { IWorkspaceInvitationsRepository } from "../infrastructure/WorkspaceInvitationsRepository";
 import { IWorkspaceMembershipsRepository } from "../infrastructure/WorkspaceMembershipsRepository";
 import { DrizzleDb } from "../types";
+import {
+  workspaceInvitations,
+  workspaceMemberships,
+} from "../db/workspace-schema";
+import { eq } from "drizzle-orm";
 
 export interface IWorkspaceInvitationsService {
   createInvitation(
@@ -81,32 +87,59 @@ export class WorkspaceInvitationsService
     invitationId: InvitationId,
     userId: UserId
   ): Promise<WorkspaceMembership> {
-    // トランザクションで招待の受諾とメンバーシップ作成を実行
-    return this.db.transaction(async (tx) => {
-      const invitation = await this.invitationsRepository.findById(
-        invitationId
-      );
+    const invitation = await this.invitationsRepository.findById(invitationId);
 
-      if (!invitation) {
-        throw new Error("Invitation not found");
-      }
+    if (!invitation) {
+      throw new Error("Invitation not found");
+    }
 
-      if (!invitation.canBeAccepted()) {
-        throw new Error("Invitation cannot be accepted (expired or not pending)");
-      }
+    if (!invitation.canBeAccepted()) {
+      throw new Error("Invitation cannot be accepted (expired or not pending)");
+    }
 
-      // 招待をacceptedに更新
-      const acceptedInvitation = invitation.accept();
-      await this.invitationsRepository.update(acceptedInvitation, tx);
+    // 招待をacceptedに更新
+    const acceptedInvitation = invitation.accept();
 
-      // メンバーシップを作成
-      const membership = WorkspaceMembership.createMembership(
-        invitation.workspaceId,
-        userId,
-        invitation.roleId
-      );
-      return this.membershipsRepository.create(membership, tx);
-    });
+    // メンバーシップを作成
+    const membership = WorkspaceMembership.createMembership(
+      invitation.workspaceId,
+      userId,
+      invitation.roleId
+    );
+
+    // D1のbatch()を使用して複数のクエリを一度に実行
+    const results = await this.db.batch([
+      this.db
+        .update(workspaceInvitations)
+        .set({
+          status: acceptedInvitation.status.value,
+          updatedAt: new Date(),
+        })
+        .where(eq(workspaceInvitations.invitationId, invitationId.toString()))
+        .returning(),
+      this.db
+        .insert(workspaceMemberships)
+        .values({
+          membershipId: membership.membershipId.toString(),
+          workspaceId: membership.workspaceId.toString(),
+          userId: membership.userId.toString(),
+          roleId: membership.roleId.value,
+        })
+        .returning(),
+    ]);
+
+    const createdMembershipResult = results[1];
+    if (!createdMembershipResult || createdMembershipResult.length === 0) {
+      throw new Error("Failed to create workspace membership");
+    }
+
+    const createdMembershipData = createdMembershipResult[0];
+    return WorkspaceMembership.of(
+      MembershipId.of(createdMembershipData.membershipId),
+      WorkspaceId.of(createdMembershipData.workspaceId),
+      UserId.of(createdMembershipData.userId),
+      RoleId.of(createdMembershipData.roleId)
+    );
   }
 
   async rejectInvitation(

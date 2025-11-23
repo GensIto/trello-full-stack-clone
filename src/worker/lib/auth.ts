@@ -31,6 +31,11 @@ export const createAuth = (db: DrizzleDb) => {
     }),
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
+    advanced: {
+      database: {
+        generateId: () => crypto.randomUUID(),
+      },
+    },
   });
   authCache.set(db, auth);
   return auth;

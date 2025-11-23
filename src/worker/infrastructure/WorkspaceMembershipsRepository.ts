@@ -7,7 +7,7 @@ import {
   UserId,
   WorkspaceId,
 } from "../domain/value-object";
-import { DrizzleDb, DrizzleTransaction } from "../types";
+import { DrizzleDb, D1Transaction } from "../types";
 
 export interface IWorkspaceMembershipsRepository {
   findById(id: MembershipId): Promise<WorkspaceMembership>;
@@ -18,9 +18,9 @@ export interface IWorkspaceMembershipsRepository {
     userId: UserId
   ): Promise<WorkspaceMembership | null>;
   create(
-    workspaceMembership: WorkspaceMembership,
-    tx?: DrizzleTransaction
+    workspaceMembership: WorkspaceMembership
   ): Promise<WorkspaceMembership>;
+  createBuilder(workspaceMembership: WorkspaceMembership): D1Transaction;
   update(
     workspaceMembership: WorkspaceMembership
   ): Promise<WorkspaceMembership>;
@@ -109,11 +109,9 @@ export class WorkspaceMembershipsRepository
     );
   }
   async create(
-    workspaceMembership: WorkspaceMembership,
-    tx?: DrizzleTransaction
+    workspaceMembership: WorkspaceMembership
   ): Promise<WorkspaceMembership> {
-    const db = tx ?? this.db;
-    const result = await db
+    const result = await this.db
       .insert(workspaceMemberships)
       .values({
         membershipId: workspaceMembership.membershipId.toString(),
@@ -132,6 +130,18 @@ export class WorkspaceMembershipsRepository
       UserId.of(result.userId),
       RoleId.of(result.roleId)
     );
+  }
+
+  createBuilder(workspaceMembership: WorkspaceMembership) {
+    return this.db
+      .insert(workspaceMemberships)
+      .values({
+        membershipId: workspaceMembership.membershipId.toString(),
+        workspaceId: workspaceMembership.workspaceId.toString(),
+        userId: workspaceMembership.userId.toString(),
+        roleId: workspaceMembership.roleId.value,
+      })
+      .returning();
   }
   async update(
     workspaceMembership: WorkspaceMembership

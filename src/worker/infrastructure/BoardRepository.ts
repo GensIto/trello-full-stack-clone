@@ -2,16 +2,12 @@ import { eq, and } from "drizzle-orm";
 import { boards } from "../db/board-schema";
 import { Board } from "../domain/entities";
 import { BoardId, BoardName, WorkspaceId } from "../domain/value-object";
-import { DrizzleDb, DrizzleTransaction } from "../types";
+import { DrizzleDb } from "../types";
 
 export interface IBoardRepository {
   findById(workspaceId: WorkspaceId, boardId: BoardId): Promise<Board>;
   findByWorkspaceId(workspaceId: WorkspaceId): Promise<Board[]>;
-  create(
-    workspaceId: WorkspaceId,
-    name: BoardName,
-    tx?: DrizzleTransaction
-  ): Promise<Board>;
+  create(workspaceId: WorkspaceId, name: BoardName): Promise<Board>;
   update(
     workspaceId: WorkspaceId,
     boardId: BoardId,
@@ -60,13 +56,8 @@ export class BoardRepository implements IBoardRepository {
     );
   }
 
-  async create(
-    workspaceId: WorkspaceId,
-    name: BoardName,
-    tx: DrizzleTransaction
-  ): Promise<Board> {
-    const db = tx ?? this.db;
-    const result = await db
+  async create(workspaceId: WorkspaceId, name: BoardName): Promise<Board> {
+    const result = await this.db
       .insert(boards)
       .values({
         boardId: crypto.randomUUID(),

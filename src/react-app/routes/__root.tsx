@@ -13,7 +13,9 @@ const RootLayout = () => {
         </div>
       </div>
       <hr />
-      <Outlet />
+      <div className='py-6 px-8'>
+        <Outlet />
+      </div>
     </>
   );
 };

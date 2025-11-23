@@ -1,45 +1,28 @@
-import { DrizzleDb, DrizzleTransaction } from "../types";
+import { DrizzleDb } from "../types";
 import { boardMemberships } from "../db/board-schema";
 import { BoardMembership } from "../domain/entities/BoardMembership";
 import { and, eq } from "drizzle-orm";
 import { BoardId } from "../domain/value-object";
 
 export interface IBoardMembershipsRepository {
-  create(membership: BoardMembership, tx?: DrizzleTransaction): Promise<void>;
-  update(
-    boardId: BoardId,
-    membership: BoardMembership,
-    tx?: DrizzleTransaction
-  ): Promise<void>;
-  delete(
-    boardId: BoardId,
-    membership: BoardMembership,
-    tx?: DrizzleTransaction
-  ): Promise<void>;
+  create(membership: BoardMembership): Promise<void>;
+  update(boardId: BoardId, membership: BoardMembership): Promise<void>;
+  delete(boardId: BoardId, membership: BoardMembership): Promise<void>;
 }
 
 export class BoardMembershipsRepository implements IBoardMembershipsRepository {
   constructor(private readonly db: DrizzleDb) {}
 
-  async create(
-    membership: BoardMembership,
-    tx?: DrizzleTransaction
-  ): Promise<void> {
-    const db = tx ?? this.db;
-    await db.insert(boardMemberships).values({
+  async create(membership: BoardMembership): Promise<void> {
+    await this.db.insert(boardMemberships).values({
       boardMembershipId: membership.boardMembershipId.toString(),
       boardId: membership.boardId.toString(),
       membershipId: membership.membershipId.toString(),
     });
   }
 
-  async update(
-    boardId: BoardId,
-    membership: BoardMembership,
-    tx?: DrizzleTransaction
-  ): Promise<void> {
-    const db = tx ?? this.db;
-    await db
+  async update(boardId: BoardId, membership: BoardMembership): Promise<void> {
+    await this.db
       .update(boardMemberships)
       .set({
         boardMembershipId: membership.boardMembershipId.value,
@@ -54,13 +37,8 @@ export class BoardMembershipsRepository implements IBoardMembershipsRepository {
       );
   }
 
-  async delete(
-    boardId: BoardId,
-    membership: BoardMembership,
-    tx?: DrizzleTransaction
-  ): Promise<void> {
-    const db = tx ?? this.db;
-    await db
+  async delete(boardId: BoardId, membership: BoardMembership): Promise<void> {
+    await this.db
       .delete(boardMemberships)
       .where(
         and(

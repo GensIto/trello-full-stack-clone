@@ -2,11 +2,13 @@ import { eq } from "drizzle-orm";
 import { workspaces } from "../db/workspace-schema";
 import { Workspace } from "../domain/entities";
 import { UserId, WorkspaceId, WorkspaceName } from "../domain/value-object";
-import { DrizzleDb, DrizzleTransaction } from "../types";
+import { D1Transaction, DrizzleDb } from "../types";
 
 export interface IWorkspaceRepository {
   findById(id: WorkspaceId): Promise<Workspace>;
-  create(workspace: Workspace, tx: DrizzleTransaction): Promise<Workspace>;
+  findByOwnerUserId(ownerUserId: UserId): Promise<Workspace[]>;
+  create(workspace: Workspace): Promise<Workspace>;
+  createBuilder(workspace: Workspace): D1Transaction;
   update(workspace: Workspace): Promise<Workspace>;
   delete(id: WorkspaceId): Promise<void>;
 }
@@ -32,10 +34,23 @@ export class WorkspaceRepository implements IWorkspaceRepository {
     );
   }
 
-  async create(workspace: Workspace, tx?: DrizzleTransaction): Promise<Workspace> {
-    const db = tx ?? this.db;
+  async findByOwnerUserId(ownerUserId: UserId): Promise<Workspace[]> {
+    const results = await this.db
+      .select()
+      .from(workspaces)
+      .where(eq(workspaces.ownerUserId, ownerUserId.toString()))
+      .all();
+    return results.map((workspace) =>
+      Workspace.of(
+        WorkspaceId.of(workspace.workspaceId),
+        WorkspaceName.of(workspace.name),
+        UserId.of(workspace.ownerUserId)
+      )
+    );
+  }
 
-    const result = await db
+  async create(workspace: Workspace): Promise<Workspace> {
+    const result = await this.db
       .insert(workspaces)
       .values(workspace.toJson())
       .returning()
@@ -50,6 +65,10 @@ export class WorkspaceRepository implements IWorkspaceRepository {
       WorkspaceName.of(result.name),
       UserId.of(result.ownerUserId)
     );
+  }
+
+  createBuilder(workspace: Workspace) {
+    return this.db.insert(workspaces).values(workspace.toJson()).returning();
   }
 
   async update(workspace: Workspace): Promise<Workspace> {
