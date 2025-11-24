@@ -4,7 +4,6 @@ import {
   redirect,
   useRouter,
 } from "@tanstack/react-router";
-import { authClient } from "../../lib/betterAuth";
 import { client } from "../../lib/hono";
 import { CreateWorkspace } from "@/react-app/features/my-page/CreateWorkspace";
 import { Button } from "@/components/ui/button";
@@ -14,10 +13,9 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/my-page/")({
   component: MyPage,
-  beforeLoad: async () => {
-    const session = await authClient.getSession();
-    if (!session.data) {
-      throw redirect({ to: "/auth/sign-in", replace: true });
+  beforeLoad: async ({ context }) => {
+    if (!context.accessToken) {
+      return redirect({ to: "/auth/sign-in", replace: true });
     }
   },
   loader: async () => {

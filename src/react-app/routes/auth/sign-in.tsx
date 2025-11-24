@@ -1,12 +1,10 @@
 import { AuthView } from "@daveyplate/better-auth-ui";
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { authClient } from "../../lib/betterAuth";
 
 export const Route = createFileRoute("/auth/sign-in")({
   component: Signin,
-  beforeLoad: async () => {
-    const session = await authClient.getSession();
-    if (session.data) {
+  beforeLoad: async ({ context }) => {
+    if (context.accessToken) {
       throw redirect({ to: "/my-page", replace: true });
     }
   },

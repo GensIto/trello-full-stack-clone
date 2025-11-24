@@ -3,7 +3,7 @@ import { authClient } from "@/react-app/lib/betterAuth";
 import {
   Link,
   Outlet,
-  createRootRoute,
+  createRootRouteWithContext,
   useRouter,
 } from "@tanstack/react-router";
 
@@ -12,8 +12,10 @@ const RootLayout = () => {
   const router = useRouter();
 
   const handleSignOut = async () => {
-    await authClient.signOut();
-    router.navigate({ to: "/auth/sign-in" });
+    await authClient.signOut().then(() => {
+      router.invalidate();
+      router.navigate({ to: "/auth/sign-in" });
+    });
   };
 
   return (
@@ -38,4 +40,8 @@ const RootLayout = () => {
   );
 };
 
-export const Route = createRootRoute({ component: RootLayout });
+export const Route = createRootRouteWithContext<{
+  accessToken?: string;
+}>()({
+  component: RootLayout,
+});

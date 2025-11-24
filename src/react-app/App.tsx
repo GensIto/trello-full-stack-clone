@@ -14,6 +14,12 @@ declare module "@tanstack/react-router" {
 }
 
 export function App() {
+  const session = authClient.useSession();
+
+  if (session.isPending) {
+    return null;
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthUIProvider
@@ -25,7 +31,10 @@ export function App() {
           </Link>
         )}
       >
-        <RouterProvider router={router} />
+        <RouterProvider
+          router={router}
+          context={{ accessToken: session.data?.session?.token }}
+        />
         <Toaster />
       </AuthUIProvider>
     </QueryClientProvider>

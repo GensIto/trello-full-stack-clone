@@ -1,4 +1,3 @@
-import { authClient } from "@/react-app/lib/betterAuth";
 import { client } from "@/react-app/lib/hono";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { AvatarTooltip } from "@/components/AvatarTooltip";
@@ -10,17 +9,13 @@ import { InviteMember } from "@/react-app/features/workspace/InviteMember";
 
 export const Route = createFileRoute("/workspaces/$workspaceId/")({
   component: WorkspacePage,
-  beforeLoad: async ({ params }) => {
-    const session = await authClient.getSession();
-    if (!session.data) {
+  beforeLoad: async ({ params, context }) => {
+    if (!context.accessToken) {
       throw redirect({ to: "/auth/sign-in", replace: true });
     }
     const membershipsResponse = await queryClient.ensureQueryData({
       queryKey: ["memberships"],
       queryFn: async () => {
-        const session = await authClient.getSession();
-        if (!session.data?.user?.id) throw new Error("User not found");
-
         const memberships = await client.api.workspaces[
           ":workspaceId"
         ].memberships.$get({
