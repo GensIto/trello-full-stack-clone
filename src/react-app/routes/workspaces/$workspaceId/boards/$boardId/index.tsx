@@ -4,6 +4,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AddBoardMember } from "@/react-app/features/board/AddBoardMember";
 import { CreateCard } from "@/react-app/features/card/CreateCard";
+import { UpdateCard } from "@/react-app/features/card/UpdateCard";
 import {
   Card,
   CardContent,
@@ -11,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useState } from "react";
 
 export const Route = createFileRoute(
   "/workspaces/$workspaceId/boards/$boardId/"
@@ -25,6 +27,7 @@ export const Route = createFileRoute(
 
 function BoardPage() {
   const { workspaceId, boardId } = Route.useParams();
+  const [selectedCard, setSelectedCard] = useState<any>(null);
 
   const { data: board } = useSuspenseQuery({
     queryKey: ["board", workspaceId, boardId],
@@ -99,7 +102,11 @@ function BoardPage() {
               {cards
                 .filter((c) => c.status === col.id)
                 .map((card) => (
-                  <Card key={card.id}>
+                  <Card
+                    key={card.id}
+                    className='cursor-pointer hover:shadow-md transition-shadow'
+                    onClick={() => setSelectedCard(card)}
+                  >
                     <CardHeader className='p-4 pb-2'>
                       <CardTitle className='text-base'>{card.title}</CardTitle>
                       <CardDescription>{card.description}</CardDescription>
@@ -120,6 +127,16 @@ function BoardPage() {
           </div>
         ))}
       </div>
+      {selectedCard && (
+        <UpdateCard
+          workspaceId={workspaceId}
+          boardId={boardId}
+          card={selectedCard}
+          members={board.members}
+          open={!!selectedCard}
+          onOpenChange={(open) => !open && setSelectedCard(null)}
+        />
+      )}
     </div>
   );
 }
