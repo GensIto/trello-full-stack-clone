@@ -3,7 +3,7 @@ import { BoardId } from "../domain/value-object";
 import { IBoardMembershipsRepository } from "../infrastructure/BoardMembershipsRepository";
 
 export interface IBoardMembershipsService {
-  updateBoardMembership(
+  addMemberToBoard(
     boardId: string,
     membership: BoardMembership
   ): Promise<void>;
@@ -18,11 +18,11 @@ export class BoardMembershipsService implements IBoardMembershipsService {
     private readonly boardMembershipsRepository: IBoardMembershipsRepository
   ) {}
 
-  async updateBoardMembership(
+  async addMemberToBoard(
     boardId: string,
     membership: BoardMembership
   ): Promise<void> {
-    return this.boardMembershipsRepository.update(
+    return this.boardMembershipsRepository.create(
       BoardId.of(boardId),
       membership
     );

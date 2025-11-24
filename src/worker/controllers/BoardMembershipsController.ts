@@ -48,7 +48,7 @@ export const boardMembershipsRouter = app
       }
 
       const boardMembershipsService = c.get("boardMembershipsService");
-      await boardMembershipsService.updateBoardMembership(
+      await boardMembershipsService.addMemberToBoard(
         boardId,
         BoardMembership.of(
           BoardMembershipId.of(crypto.randomUUID()),

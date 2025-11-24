@@ -5,7 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { BoardId } from "../domain/value-object";
 
 export interface IBoardMembershipsRepository {
-  create(membership: BoardMembership): Promise<void>;
+  create(boardId: BoardId, membership: BoardMembership): Promise<void>;
   update(boardId: BoardId, membership: BoardMembership): Promise<void>;
   delete(boardId: BoardId, membership: BoardMembership): Promise<void>;
 }
@@ -13,10 +13,10 @@ export interface IBoardMembershipsRepository {
 export class BoardMembershipsRepository implements IBoardMembershipsRepository {
   constructor(private readonly db: DrizzleDb) {}
 
-  async create(membership: BoardMembership): Promise<void> {
+  async create(boardId: BoardId, membership: BoardMembership): Promise<void> {
     await this.db.insert(boardMemberships).values({
       boardMembershipId: membership.boardMembershipId.toString(),
-      boardId: membership.boardId.toString(),
+      boardId: boardId.toString(),
       membershipId: membership.membershipId.toString(),
     });
   }
