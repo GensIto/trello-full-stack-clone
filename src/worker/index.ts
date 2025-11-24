@@ -6,9 +6,10 @@ import { DIContainer } from "./di-container";
 import { injectAuth, injectDiContainer } from "./middleware";
 import { createAuth } from "./lib/auth";
 import { createDb } from "./db";
+import { env } from "cloudflare:workers";
 
 const app = new Hono<{
-  Bindings: CloudflareBindings;
+  Bindings: typeof env;
   Variables: {
     diContainer: DIContainer<DependencyTypes>;
   };

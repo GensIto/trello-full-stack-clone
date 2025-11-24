@@ -1,12 +1,13 @@
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "./schema";
 import { DrizzleDb } from "../types";
+import { env } from "cloudflare:workers";
 
 // Drizzleインスタンスのキャッシュ
 // WeakMapを使用することで、D1Databaseが不要になれば自動的にGCされる
-const dbCache = new WeakMap<D1Database, DrizzleDb>();
+const dbCache = new WeakMap<typeof env.DB, DrizzleDb>();
 
-export const createDb = (database: D1Database) => {
+export const createDb = (database: typeof env.DB) => {
   // キャッシュから取得を試みる
   const cached = dbCache.get(database);
   if (cached) {

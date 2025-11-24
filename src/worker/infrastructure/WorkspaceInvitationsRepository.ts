@@ -9,21 +9,15 @@ import {
   EmailAddress,
   RoleId,
 } from "../domain/value-object";
-import { DrizzleDb, DrizzleTransaction } from "../types";
+import { DrizzleDb } from "../types";
 
 export interface IWorkspaceInvitationsRepository {
   findById(id: InvitationId): Promise<WorkspaceInvitation | null>;
   findByEmail(email: EmailAddress): Promise<WorkspaceInvitation[]>;
   findByWorkspaceId(workspaceId: WorkspaceId): Promise<WorkspaceInvitation[]>;
   findPendingByEmail(email: EmailAddress): Promise<WorkspaceInvitation[]>;
-  create(
-    invitation: WorkspaceInvitation,
-    tx?: DrizzleTransaction
-  ): Promise<WorkspaceInvitation>;
-  update(
-    invitation: WorkspaceInvitation,
-    tx?: DrizzleTransaction
-  ): Promise<WorkspaceInvitation>;
+  create(invitation: WorkspaceInvitation): Promise<WorkspaceInvitation>;
+  update(invitation: WorkspaceInvitation): Promise<WorkspaceInvitation>;
   delete(id: InvitationId): Promise<void>;
 }
 
@@ -123,12 +117,8 @@ export class WorkspaceInvitationsRepository
     );
   }
 
-  async create(
-    invitation: WorkspaceInvitation,
-    tx?: DrizzleTransaction
-  ): Promise<WorkspaceInvitation> {
-    const db = tx ?? this.db;
-    const result = await db
+  async create(invitation: WorkspaceInvitation): Promise<WorkspaceInvitation> {
+    const result = await this.db
       .insert(workspaceInvitations)
       .values({
         invitationId: invitation.invitationId.toString(),
@@ -157,12 +147,8 @@ export class WorkspaceInvitationsRepository
     );
   }
 
-  async update(
-    invitation: WorkspaceInvitation,
-    tx?: DrizzleTransaction
-  ): Promise<WorkspaceInvitation> {
-    const db = tx ?? this.db;
-    const result = await db
+  async update(invitation: WorkspaceInvitation): Promise<WorkspaceInvitation> {
+    const result = await this.db
       .update(workspaceInvitations)
       .set({
         status: invitation.status.value,

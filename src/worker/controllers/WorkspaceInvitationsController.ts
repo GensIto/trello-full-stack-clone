@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Env, Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import z from "zod";
 import { DependencyTypes } from "../container";
@@ -14,7 +14,7 @@ import {
 } from "../domain/value-object";
 
 const app = new Hono<{
-  Bindings: CloudflareBindings;
+  Bindings: Env;
   Variables: {
     diContainer: DIContainer<DependencyTypes>;
     workspaceInvitationsService: WorkspaceInvitationsService;

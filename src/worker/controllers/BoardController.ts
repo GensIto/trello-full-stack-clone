@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Env, Hono } from "hono";
 import { DependencyTypes } from "../container";
 import { DIContainer } from "../di-container";
 import { createAuth } from "../lib/auth";
@@ -11,7 +11,7 @@ import { cardRouter } from "./CardController";
 import { WorkspaceId } from "@/worker/domain/value-object";
 
 const app = new Hono<{
-  Bindings: CloudflareBindings;
+  Bindings: Env;
   Variables: {
     diContainer: DIContainer<DependencyTypes>;
     boardService: BoardService;

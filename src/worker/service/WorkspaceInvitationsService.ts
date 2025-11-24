@@ -9,7 +9,6 @@ import {
   MembershipId,
 } from "../domain/value-object";
 import { IWorkspaceInvitationsRepository } from "../infrastructure/WorkspaceInvitationsRepository";
-import { IWorkspaceMembershipsRepository } from "../infrastructure/WorkspaceMembershipsRepository";
 import { IWorkspaceRepository } from "../infrastructure/WorkspaceRepository";
 import { DrizzleDb } from "../types";
 import {
@@ -57,7 +56,6 @@ export class WorkspaceInvitationsService
   constructor(
     private readonly db: DrizzleDb,
     private readonly invitationsRepository: IWorkspaceInvitationsRepository,
-    private readonly membershipsRepository: IWorkspaceMembershipsRepository,
     private readonly workspaceRepository: IWorkspaceRepository
   ) {}
 
