@@ -100,6 +100,13 @@ function WorkspacePage() {
                     params={{ workspaceId, boardId: board.boardId as string }}
                   >
                     <h3>{board.name}</h3>
+                    <ul className='flex flex-wrap gap-2'>
+                      {board.members.map((member) => (
+                        <li key={member.userId}>
+                          <AvatarTooltip name={member.name} />
+                        </li>
+                      ))}
+                    </ul>
                   </Link>
                 </li>
               );

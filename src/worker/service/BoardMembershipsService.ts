@@ -25,7 +25,7 @@ export class BoardMembershipsService implements IBoardMembershipsService {
     return this.boardMembershipsRepository.update(
       BoardId.of(boardId),
       membership
-    )
+    );
   }
 
   async removeMemberFromBoard(

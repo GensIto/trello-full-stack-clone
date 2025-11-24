@@ -3,16 +3,19 @@ import { DependencyTypes } from "../container";
 import { DIContainer } from "../di-container";
 import { createAuth } from "../lib/auth";
 import { BoardService } from "../service/BoardService";
+import { BoardQueryService } from "../service/BoardQueryService";
 import z from "zod";
 import { zValidator } from "@hono/zod-validator";
 import { boardMembershipsRouter } from "./BoardMembershipsController";
 import { cardRouter } from "./CardController";
+import { WorkspaceId } from "@/worker/domain/value-object";
 
 const app = new Hono<{
   Bindings: CloudflareBindings;
   Variables: {
     diContainer: DIContainer<DependencyTypes>;
     boardService: BoardService;
+    boardQueryService: BoardQueryService;
     user: ReturnType<typeof createAuth>["$Infer"]["Session"]["user"];
     session: ReturnType<typeof createAuth>["$Infer"]["Session"]["session"];
   };
@@ -63,8 +66,26 @@ export const boardRouter = app
     async (c) => {
       const { workspaceId } = c.req.valid("param");
       const boardService = c.get("boardService");
+      const boardQueryService = c.get("boardQueryService");
+
       const boards = await boardService.findBoardsByWorkspaceId(workspaceId);
-      return c.json(boards.map((board) => board.toJson()));
+
+      const results = await Promise.all(
+        boards.map(async (board) => {
+          const result = await boardQueryService.getBoardWithMembers(
+            WorkspaceId.of(workspaceId),
+            board.boardId
+          );
+          return result;
+        })
+      );
+
+      const boardsWithMembers = results.map((result) => ({
+        ...result.board.toJson(),
+        members: result.members.map((member) => member.toJson()),
+      }));
+
+      return c.json(boardsWithMembers);
     }
   )
   .get(
@@ -73,8 +94,18 @@ export const boardRouter = app
     async (c) => {
       const { workspaceId, boardId } = c.req.valid("param");
       const boardService = c.get("boardService");
+      const boardQueryService = c.get("boardQueryService");
+
       const board = await boardService.findBoardById(workspaceId, boardId);
-      return c.json(board.toJson());
+
+      const result = await boardQueryService.getBoardWithMembers(
+        WorkspaceId.of(workspaceId),
+        board.boardId
+      );
+      return c.json({
+        ...result.board.toJson(),
+        members: result.members.map((member) => member.toJson()),
+      });
     }
   )
   .put(
