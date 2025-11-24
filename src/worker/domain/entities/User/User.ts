@@ -1,9 +1,12 @@
 import { z } from "zod";
-import { EmailAddress } from "../../value-object";
+import { EmailAddress, UserId, UserName } from "../../value-object";
 
 const userSchema = z.object({
-  userId: z.uuid("Invalid user ID format"),
-  name: z.string().min(1, "Name is required").max(100, "Name is too long"),
+  userId: z.custom<UserId>((val) => val instanceof UserId, "Invalid user ID"),
+  name: z.custom<UserName>(
+    (val) => val instanceof UserName,
+    "Invalid user name"
+  ),
   email: z.custom<EmailAddress>(
     (val) => val instanceof EmailAddress,
     "Invalid email address"
@@ -16,8 +19,8 @@ const userSchema = z.object({
 
 export class User {
   private constructor(
-    public readonly userId: string,
-    public readonly name: string,
+    public readonly userId: UserId,
+    public readonly name: UserName,
     public readonly email: EmailAddress,
     public readonly image: string | null,
     public readonly createdAt: Date,
@@ -26,8 +29,8 @@ export class User {
   ) {}
 
   static of(
-    userId: string,
-    name: string,
+    userId: UserId,
+    name: UserName,
     email: EmailAddress,
     image: string | null = null,
     createdAt: Date = new Date(),
@@ -55,8 +58,8 @@ export class User {
   }
 
   static tryOf(
-    userId: string,
-    name: string,
+    userId: UserId,
+    name: UserName,
     email: EmailAddress,
     image: string | null = null,
     createdAt: Date = new Date(),
@@ -103,8 +106,8 @@ export class User {
     deletedAt: string | null;
   } {
     return {
-      userId: this.userId,
-      name: this.name,
+      userId: this.userId.value,
+      name: this.name.value,
       email: this.email.value,
       image: this.image,
       createdAt: this.createdAt.toISOString(),

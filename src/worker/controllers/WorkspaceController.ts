@@ -8,12 +8,14 @@ import { Workspace } from "../domain/entities";
 import { WorkspaceId, WorkspaceName, UserId } from "../domain/value-object";
 import { createAuth } from "../lib/auth";
 import { boardRouter } from "./BoardController";
+import { WorkspaceMembershipsService } from "@/worker/service/WorkspaceMembershipsService";
 
 const app = new Hono<{
   Bindings: CloudflareBindings;
   Variables: {
     diContainer: DIContainer<DependencyTypes>;
     workspaceService: WorkspaceService;
+    workspaceMembershipsService: WorkspaceMembershipsService;
     user: ReturnType<typeof createAuth>["$Infer"]["Session"]["user"];
     session: ReturnType<typeof createAuth>["$Infer"]["Session"]["session"];
   };
@@ -63,6 +65,24 @@ export const workspaceRouter = app
       );
 
       return c.json(workspace.toJson());
+    }
+  )
+  .get(
+    "/:workspaceId/memberships",
+    zValidator("param", z.object({ workspaceId: z.uuid() })),
+    async (c) => {
+      const { workspaceId } = c.req.valid("param");
+      const workspaceMembershipsService = c.get("workspaceMembershipsService");
+      const workspaceMemberships =
+        await workspaceMembershipsService.getMembersByWorkspace(
+          WorkspaceId.of(workspaceId)
+        );
+      return c.json(
+        workspaceMemberships.map((workspaceMembership) => ({
+          membership: workspaceMembership.membership.toJson(),
+          user: workspaceMembership.user.toJson(),
+        }))
+      );
     }
   )
   .delete(

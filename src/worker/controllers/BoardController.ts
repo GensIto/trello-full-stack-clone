@@ -54,7 +54,7 @@ export const boardRouter = app
         name,
         membershipIds
       );
-      return c.json(board);
+      return c.json(board.toJson());
     }
   )
   .get(
@@ -64,7 +64,7 @@ export const boardRouter = app
       const { workspaceId } = c.req.valid("param");
       const boardService = c.get("boardService");
       const boards = await boardService.findBoardsByWorkspaceId(workspaceId);
-      return c.json(boards);
+      return c.json(boards.map((board) => board.toJson()));
     }
   )
   .get(
@@ -74,7 +74,7 @@ export const boardRouter = app
       const { workspaceId, boardId } = c.req.valid("param");
       const boardService = c.get("boardService");
       const board = await boardService.findBoardById(workspaceId, boardId);
-      return c.json(board);
+      return c.json(board.toJson());
     }
   )
   .put(
@@ -97,7 +97,7 @@ export const boardRouter = app
       }
 
       const board = await boardService.updateBoard(workspaceId, boardId, name);
-      return c.json(board);
+      return c.json(board.toJson());
     }
   )
   .delete(

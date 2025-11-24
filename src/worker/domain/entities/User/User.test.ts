@@ -1,10 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { User } from "./User";
-import { EmailAddress } from "../../value-object";
+import { EmailAddress, UserId, UserName } from "../../value-object";
 
 describe("User", () => {
-  const validUserId = "11111111-1111-4111-8111-111111111111";
-  const validName = "John Doe";
+  const validUserIdString = "11111111-1111-4111-8111-111111111111";
+  const validUserId = UserId.of(validUserIdString);
+  const validNameString = "John Doe";
+  const validName = UserName.of(validNameString);
   const validEmail = EmailAddress.of("john.doe@example.com");
   const validImage = "https://example.com/avatar.jpg";
   const validCreatedAt = new Date("2024-01-01T00:00:00Z");
@@ -71,16 +73,16 @@ describe("User", () => {
     });
 
     it("無効なユーザーIDでエラーをスローすること", () => {
-      expect(() => User.of("invalid-id", validName, validEmail)).toThrow();
+      expect(() => UserId.of("invalid-id")).toThrow();
     });
 
     it("空の名前でエラーをスローすること", () => {
-      expect(() => User.of(validUserId, "", validEmail)).toThrow();
+      expect(() => UserName.of("")).toThrow();
     });
 
     it("名前が長すぎる場合にエラーをスローすること", () => {
       const longName = "a".repeat(101);
-      expect(() => User.of(validUserId, longName, validEmail)).toThrow();
+      expect(() => UserName.of(longName)).toThrow();
     });
 
     it("無効な画像URLでエラーをスローすること", () => {
@@ -128,30 +130,30 @@ describe("User", () => {
     });
 
     it("無効なユーザーIDでエラーを返すこと", () => {
-      const result = User.tryOf("invalid-id", validName, validEmail);
+      const userIdResult = UserId.tryOf("invalid-id");
 
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error).toBeTruthy();
+      expect(userIdResult.success).toBe(false);
+      if (!userIdResult.success) {
+        expect(userIdResult.error).toBeTruthy();
       }
     });
 
     it("空の名前でエラーを返すこと", () => {
-      const result = User.tryOf(validUserId, "", validEmail);
+      const nameResult = UserName.tryOf("");
 
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error).toBeTruthy();
+      expect(nameResult.success).toBe(false);
+      if (!nameResult.success) {
+        expect(nameResult.error).toBeTruthy();
       }
     });
 
     it("名前が長すぎる場合にエラーを返すこと", () => {
       const longName = "a".repeat(101);
-      const result = User.tryOf(validUserId, longName, validEmail);
+      const nameResult = UserName.tryOf(longName);
 
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error).toBeTruthy();
+      expect(nameResult.success).toBe(false);
+      if (!nameResult.success) {
+        expect(nameResult.error).toBeTruthy();
       }
     });
   });
@@ -194,8 +196,8 @@ describe("User", () => {
       const json = user.toJson();
 
       expect(json).toEqual({
-        userId: validUserId,
-        name: validName,
+        userId: validUserIdString,
+        name: validNameString,
         email: validEmail.value,
         image: validImage,
         createdAt: validCreatedAt.toISOString(),

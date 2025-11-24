@@ -52,9 +52,9 @@ function MyPage() {
         <h1>My Page</h1>
         <CreateWorkspace />
       </div>
-      <div>
+      <div className='w-full space-y-4'>
         <h2>My Workspaces</h2>
-        <div>
+        <div className='grid grid-cols-3 gap-4'>
           {workspaces.map((workspace) => (
             <Link
               key={workspace.workspaceId}
@@ -68,10 +68,12 @@ function MyPage() {
           ))}
         </div>
       </div>
-      <div>
+      <div className='w-full space-y-4'>
         <h2>Joined Workspaces</h2>
-        <div>
-          {invitations.length === 0 && <div>No invitations</div>}
+        <div className='grid grid-cols-3 gap-4'>
+          {invitations.length === 0 && (
+            <div className='col-span-3 text-center'>No invitations</div>
+          )}
           {invitations.map((invitation) => (
             <div key={invitation.invitationId}>
               <h2>{invitation.invitedEmail}</h2>

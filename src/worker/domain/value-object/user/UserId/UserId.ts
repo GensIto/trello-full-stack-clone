@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const userIdSchema = z.string().uuid("Invalid user ID format");
+const userIdSchema = z.uuid("Invalid user ID format");
 
 export class UserId {
   private constructor(private readonly _value: string) {}

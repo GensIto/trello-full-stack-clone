@@ -12,6 +12,7 @@ import { BoardMembershipsRepository } from "./infrastructure/BoardMembershipsRep
 import { BoardMembershipsService } from "./service/BoardMembershipsService";
 import { CardRepository } from "./infrastructure/CardRepository";
 import { CardService } from "./service/CardService";
+import { UserRepository } from "@/worker/infrastructure/UserRepository";
 
 export type DependencyTypes = {
   // Workspace
@@ -37,6 +38,9 @@ export type DependencyTypes = {
   // Card
   CardRepository: CardRepository;
   CardService: CardService;
+
+  // User
+  UserRepository: UserRepository;
 };
 
 export const createContainer = (db: DrizzleDb) => {
@@ -62,6 +66,7 @@ export const createContainer = (db: DrizzleDb) => {
   );
   diContainer.register("CardRepository", CardRepository, db);
 
+  diContainer.register("UserRepository", UserRepository, db);
   // Services
   diContainer.register(
     "WorkspaceService",
@@ -80,7 +85,8 @@ export const createContainer = (db: DrizzleDb) => {
   diContainer.register(
     "WorkspaceMembershipsService",
     WorkspaceMembershipsService,
-    diContainer.get("WorkspaceMembershipsRepository")
+    diContainer.get("WorkspaceMembershipsRepository"),
+    diContainer.get("UserRepository")
   );
   diContainer.register(
     "BoardService",
