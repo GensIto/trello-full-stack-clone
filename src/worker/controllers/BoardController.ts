@@ -82,7 +82,10 @@ export const boardRouter = app
 
       const boardsWithMembers = results.map((result) => ({
         ...result.board.toJson(),
-        members: result.members.map((member) => member.toJson()),
+        members: result.members.map((member) => ({
+          ...member.user.toJson(),
+          membershipId: member.membershipId.value,
+        })),
       }));
 
       return c.json(boardsWithMembers);
@@ -104,7 +107,10 @@ export const boardRouter = app
       );
       return c.json({
         ...result.board.toJson(),
-        members: result.members.map((member) => member.toJson()),
+        members: result.members.map((member) => ({
+          ...member.user.toJson(),
+          membershipId: member.membershipId.value,
+        })),
       });
     }
   )

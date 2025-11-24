@@ -3,6 +3,7 @@ import { DependencyTypes } from "../container";
 import { DIContainer } from "../di-container";
 import { createAuth } from "../lib/auth";
 import { CardService } from "../service/CardService";
+import { CardQueryService } from "../service/CardQueryService";
 import { zValidator } from "@hono/zod-validator";
 import z from "zod";
 import {
@@ -22,6 +23,7 @@ const app = new Hono<{
   Variables: {
     diContainer: DIContainer<DependencyTypes>;
     cardService: CardService;
+    cardQueryService: CardQueryService;
     boardService: BoardService;
     user: ReturnType<typeof createAuth>["$Infer"]["Session"]["user"];
     session: ReturnType<typeof createAuth>["$Infer"]["Session"]["session"];
@@ -39,7 +41,7 @@ export const cardRouter = app
           title: z.string().min(1).max(100),
           description: z.string().min(1).max(1000),
           status: z.enum(["todo", "in_progress", "done"]),
-          dueDate: z.date(),
+          dueDate: z.coerce.date(),
           assigneeMembershipId: z.uuid().nullable(),
         }),
       })
@@ -90,9 +92,17 @@ export const cardRouter = app
         return c.json({ error: "Unauthorized" }, 401);
       }
 
-      const cardService = c.get("cardService");
-      const cards = await cardService.findCardsByBoardId(BoardId.of(boardId));
-      return c.json(cards);
+      const cardQueryService = c.get("cardQueryService");
+      const cardsWithAssignees = await cardQueryService.getCardsWithAssignees(
+        BoardId.of(boardId)
+      );
+
+      return c.json(
+        cardsWithAssignees.map(({ card, assignee }) => ({
+          ...card.toJson(),
+          assignee: assignee ? assignee.toJson() : null,
+        }))
+      );
     }
   )
   .get(
@@ -135,7 +145,7 @@ export const cardRouter = app
           title: z.string().min(1).max(100),
           description: z.string().min(1).max(1000),
           status: z.enum(["todo", "in_progress", "done"]),
-          dueDate: z.date(),
+          dueDate: z.coerce.date(),
           assigneeMembershipId: z.uuid().nullable(),
         }),
       })

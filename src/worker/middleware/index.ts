@@ -16,6 +16,7 @@ export const injectDiContainer = async (c: Context, next: Next) => {
   c.set("boardQueryService", di.get("BoardQueryService"));
   // Card
   c.set("cardService", di.get("CardService"));
+  c.set("cardQueryService", di.get("CardQueryService"));
   // WorkspaceInvitations
   c.set("workspaceInvitationsService", di.get("WorkspaceInvitationsService"));
   return next();

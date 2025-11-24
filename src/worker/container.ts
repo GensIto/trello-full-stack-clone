@@ -14,6 +14,7 @@ import { CardRepository } from "./infrastructure/CardRepository";
 import { CardService } from "./service/CardService";
 import { UserRepository } from "@/worker/infrastructure/UserRepository";
 import { BoardQueryService } from "./service/BoardQueryService";
+import { CardQueryService } from "./service/CardQueryService";
 
 export type DependencyTypes = {
   // Workspace
@@ -40,6 +41,7 @@ export type DependencyTypes = {
   // Card
   CardRepository: CardRepository;
   CardService: CardService;
+  CardQueryService: CardQueryService;
 
   // User
   UserRepository: UserRepository;
@@ -110,5 +112,6 @@ export const createContainer = (db: DrizzleDb) => {
     diContainer.get("CardRepository")
   );
   diContainer.register("BoardQueryService", BoardQueryService, db);
+  diContainer.register("CardQueryService", CardQueryService, db);
   return diContainer;
 };

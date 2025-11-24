@@ -10,12 +10,18 @@ import {
   UserName,
   EmailAddress,
   BoardName,
+  MembershipId,
 } from "../domain/value-object";
 import { DrizzleDb } from "../types";
 
+export interface BoardMember {
+  user: User;
+  membershipId: MembershipId;
+}
+
 export interface BoardWithMembers {
   board: Board;
-  members: User[];
+  members: BoardMember[];
 }
 
 export interface IBoardQueryService {
@@ -56,6 +62,7 @@ export class BoardQueryService implements IBoardQueryService {
         userImage: users.image,
         userCreatedAt: users.createdAt,
         userUpdatedAt: users.updatedAt,
+        membershipId: workspaceMemberships.membershipId,
       })
       .from(boardMemberships)
       .innerJoin(
@@ -66,16 +73,17 @@ export class BoardQueryService implements IBoardQueryService {
       .where(eq(boardMemberships.boardId, boardId.toString()))
       .all();
 
-    const members = membersData.map((data) =>
-      User.of(
+    const members = membersData.map((data) => ({
+      user: User.of(
         UserId.of(data.userId),
         UserName.of(data.userName),
         EmailAddress.of(data.userEmail),
         data.userImage,
         data.userCreatedAt,
         data.userUpdatedAt
-      )
-    );
+      ),
+      membershipId: MembershipId.of(data.membershipId),
+    }));
 
     return {
       board: Board.of(
