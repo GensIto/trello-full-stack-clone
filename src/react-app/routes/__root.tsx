@@ -1,6 +1,21 @@
-import { Link, Outlet, createRootRoute } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
+import { authClient } from "@/react-app/lib/betterAuth";
+import {
+  Link,
+  Outlet,
+  createRootRoute,
+  useRouter,
+} from "@tanstack/react-router";
 
 const RootLayout = () => {
+  const { data: session } = authClient.useSession();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    await authClient.signOut();
+    router.navigate({ to: "/auth/sign-in" });
+  };
+
   return (
     <>
       <div className='p-2 flex gap-2'>
@@ -10,6 +25,9 @@ const RootLayout = () => {
               <h1 className='text-base leading-6 text-foreground'>Home</h1>
             </div>
           </Link>
+          {session?.user?.email && (
+            <Button onClick={handleSignOut}>Sign Out</Button>
+          )}
         </div>
       </div>
       <hr />

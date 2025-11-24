@@ -62,11 +62,11 @@ export const workspaceInvitationsRouter = app
 
     try {
       const invitations =
-        await workspaceInvitationsService.getPendingInvitationsByEmail(
+        await workspaceInvitationsService.getInvitationsByEmail(
           EmailAddress.of(userEmail)
         );
 
-      return c.json(invitations.map((inv) => inv.toJson()));
+      return c.json(invitations);
     } catch (error) {
       return c.json(
         { error: error instanceof Error ? error.message : "Unknown error" },

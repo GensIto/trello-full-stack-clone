@@ -1,10 +1,12 @@
 import { authClient } from "@/react-app/lib/betterAuth";
 import { client } from "@/react-app/lib/hono";
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { AvatarTooltip } from "@/components/AvatarTooltip";
 import { CreateBoard } from "@/react-app/features/workspace/CreateBoard";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Suspense } from "react";
+import { queryClient } from "@/react-app/lib/query";
+import { InviteMember } from "@/react-app/features/workspace/InviteMember";
 
 export const Route = createFileRoute("/workspaces/$workspaceId/")({
   component: WorkspacePage,
@@ -13,22 +15,25 @@ export const Route = createFileRoute("/workspaces/$workspaceId/")({
     if (!session.data) {
       throw redirect({ to: "/auth/sign-in", replace: true });
     }
-    const memberships = await client.api.workspaces[
-      ":workspaceId"
-    ].memberships.$get({
-      param: {
-        workspaceId: params.workspaceId,
+    const membershipsResponse = await queryClient.ensureQueryData({
+      queryKey: ["memberships"],
+      queryFn: async () => {
+        const session = await authClient.getSession();
+        if (!session.data?.user?.id) throw new Error("User not found");
+
+        const memberships = await client.api.workspaces[
+          ":workspaceId"
+        ].memberships.$get({
+          param: {
+            workspaceId: params.workspaceId,
+          },
+        });
+        if (!memberships.ok) throw new Error(`Failed: ${memberships.status}`);
+        return memberships.json();
       },
+      staleTime: 1000 * 60 * 5,
     });
-    const membershipsData = await memberships.json();
-    if (
-      !membershipsData.some(
-        (membership) => membership.user.userId === session.data?.user.id
-      )
-    ) {
-      throw redirect({ to: "/my-page", replace: true });
-    }
-    return { memberships: membershipsData };
+    return { memberships: membershipsResponse };
   },
 });
 
@@ -58,8 +63,11 @@ function WorkspacePage() {
     <div className='w-full space-y-8'>
       <h1>Workspace Page</h1>
       <div className='w-full space-y-4'>
-        <h2>Members</h2>
-        <ul>
+        <div className='w-full flex justify-between items-center'>
+          <h2>Members</h2>
+          <InviteMember workspaceId={workspaceId} />
+        </div>
+        <ul className='*:data-[slot=avatar]:ring-background flex -space-x-2 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:grayscale'>
           {memberships.map(({ membership, user }) => {
             return (
               <li key={membership.membershipId}>
@@ -82,12 +90,22 @@ function WorkspacePage() {
           />
         </div>
         <Suspense fallback={<div>Loading...</div>}>
-          <ul>
-            {boards.length === 0 && <li>No boards</li>}
+          <ul className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+            {boards.length === 0 && (
+              <li className='col-span-full'>No boards</li>
+            )}
             {boards.map((board) => {
               return (
-                <li key={board.boardId}>
-                  <h3>{board.name}</h3>
+                <li
+                  key={board.boardId}
+                  className='col-span-1 border border-gray-200 rounded-md p-4'
+                >
+                  <Link
+                    to={"/workspaces/$workspaceId/boards/$boardId"}
+                    params={{ workspaceId, boardId: board.boardId as string }}
+                  >
+                    <h3>{board.name}</h3>
+                  </Link>
                 </li>
               );
             })}

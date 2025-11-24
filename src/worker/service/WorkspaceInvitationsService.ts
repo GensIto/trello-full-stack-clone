@@ -10,6 +10,7 @@ import {
 } from "../domain/value-object";
 import { IWorkspaceInvitationsRepository } from "../infrastructure/WorkspaceInvitationsRepository";
 import { IWorkspaceMembershipsRepository } from "../infrastructure/WorkspaceMembershipsRepository";
+import { IWorkspaceRepository } from "../infrastructure/WorkspaceRepository";
 import { DrizzleDb } from "../types";
 import {
   workspaceInvitations,
@@ -24,7 +25,18 @@ export interface IWorkspaceInvitationsService {
     invitedBy: UserId,
     roleId: RoleId
   ): Promise<WorkspaceInvitation>;
-  getInvitationsByEmail(email: EmailAddress): Promise<WorkspaceInvitation[]>;
+  getInvitationsByEmail(email: EmailAddress): Promise<
+    Array<{
+      invitationId: string;
+      workspaceId: string;
+      workspaceName: string;
+      invitedEmail: string;
+      invitedBy: string;
+      roleId: string;
+      status: string;
+      expiresAt: string;
+    }>
+  >;
   getPendingInvitationsByEmail(
     email: EmailAddress
   ): Promise<WorkspaceInvitation[]>;
@@ -45,7 +57,8 @@ export class WorkspaceInvitationsService
   constructor(
     private readonly db: DrizzleDb,
     private readonly invitationsRepository: IWorkspaceInvitationsRepository,
-    private readonly membershipsRepository: IWorkspaceMembershipsRepository
+    private readonly membershipsRepository: IWorkspaceMembershipsRepository,
+    private readonly workspaceRepository: IWorkspaceRepository
   ) {}
 
   async createInvitation(
@@ -65,10 +78,40 @@ export class WorkspaceInvitationsService
     return this.invitationsRepository.create(invitation);
   }
 
-  async getInvitationsByEmail(
-    email: EmailAddress
-  ): Promise<WorkspaceInvitation[]> {
-    return this.invitationsRepository.findByEmail(email);
+  async getInvitationsByEmail(email: EmailAddress): Promise<
+    Array<{
+      invitationId: string;
+      workspaceId: string;
+      workspaceName: string;
+      invitedEmail: string;
+      invitedBy: string;
+      roleId: string;
+      status: string;
+      expiresAt: string;
+    }>
+  > {
+    const invitations = await this.invitationsRepository.findByEmail(email);
+
+    const withWorkspaceNames = await Promise.all(
+      invitations.map(async (invitation) => {
+        try {
+          const workspace = await this.workspaceRepository.findById(
+            invitation.workspaceId
+          );
+          return {
+            ...invitation.toJson(),
+            workspaceName: workspace.name.toString(),
+          };
+        } catch {
+          return {
+            ...invitation.toJson(),
+            workspaceName: "Unknown Workspace",
+          };
+        }
+      })
+    );
+
+    return withWorkspaceNames;
   }
 
   async getPendingInvitationsByEmail(

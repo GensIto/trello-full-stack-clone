@@ -80,7 +80,8 @@ export const createContainer = (db: DrizzleDb) => {
     WorkspaceInvitationsService,
     db,
     diContainer.get("WorkspaceInvitationsRepository"),
-    diContainer.get("WorkspaceMembershipsRepository")
+    diContainer.get("WorkspaceMembershipsRepository"),
+    diContainer.get("WorkspaceRepository")
   );
   diContainer.register(
     "WorkspaceMembershipsService",

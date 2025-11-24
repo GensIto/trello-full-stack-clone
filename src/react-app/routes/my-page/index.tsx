@@ -1,7 +1,16 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  redirect,
+  useRouter,
+} from "@tanstack/react-router";
 import { authClient } from "../../lib/betterAuth";
 import { client } from "../../lib/hono";
 import { CreateWorkspace } from "@/react-app/features/my-page/CreateWorkspace";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/my-page/")({
   component: MyPage,
@@ -24,22 +33,32 @@ export const Route = createFileRoute("/my-page/")({
 
 function MyPage() {
   const { invitations, workspaces } = Route.useLoaderData();
+  const router = useRouter();
 
   const handleAcceptInvitation = async (invitationId: string) => {
     const response = await client.api.invitations.accept.$post({
       json: { invitationId },
     });
-
-    const data = await response.json();
-    return data;
+    if (!response.ok) {
+      toast.error("Failed to accept invitation");
+      return;
+    }
+    const invitation = await response.json();
+    toast.success("Invitation accepted");
+    router.navigate({ to: `/workspaces/${invitation.workspaceId}` });
   };
 
   const handleRejectInvitation = async (invitationId: string) => {
     const response = await client.api.invitations.reject.$post({
       json: { invitationId },
     });
-    const data = await response.json();
-    return data;
+    if (!response.ok) {
+      toast.error("Failed to accept invitation");
+      return;
+    }
+    toast.success("Invitation rejected");
+    router.invalidate();
+    router.navigate({ to: "/my-page" });
   };
 
   if ("error" in invitations) {
@@ -75,18 +94,53 @@ function MyPage() {
             <div className='col-span-3 text-center'>No invitations</div>
           )}
           {invitations.map((invitation) => (
-            <div key={invitation.invitationId}>
-              <h2>{invitation.invitedEmail}</h2>
-              <button
-                onClick={() => handleAcceptInvitation(invitation.invitationId)}
-              >
-                Accept
-              </button>
-              <button
-                onClick={() => handleRejectInvitation(invitation.invitationId)}
-              >
-                Reject
-              </button>
+            <div
+              key={invitation.invitationId}
+              className='border border-gray-200 rounded-md p-4 relative space-y-2'
+            >
+              {invitation.status === "pending" && (
+                <Badge
+                  animate-ping
+                  className={cn(
+                    "absolute -top-1 -right-1 h-3 w-3 rounded-full px-1 font-mono tabular-nums",
+                    invitation.status === "pending" && "animate-ping"
+                  )}
+                  variant='default'
+                />
+              )}
+              <h2>
+                {invitation.workspaceName}
+                {invitation.status === "pending" && "に招待されました"}
+              </h2>
+              {invitation.status === "pending" ? (
+                <div className='flex gap-2'>
+                  <Button
+                    onClick={() =>
+                      handleAcceptInvitation(invitation.invitationId)
+                    }
+                  >
+                    Accept
+                  </Button>
+                  <Button
+                    variant='outline'
+                    onClick={() =>
+                      handleRejectInvitation(invitation.invitationId)
+                    }
+                  >
+                    Reject
+                  </Button>
+                </div>
+              ) : (
+                <Link
+                  to={"/workspaces/$workspaceId"}
+                  params={{ workspaceId: invitation.workspaceId }}
+                  className='w-full'
+                >
+                  <Button className='w-full' variant='outline'>
+                    View Workspace
+                  </Button>
+                </Link>
+              )}
             </div>
           ))}
         </div>

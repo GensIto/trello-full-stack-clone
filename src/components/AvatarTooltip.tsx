@@ -9,7 +9,7 @@ export function AvatarTooltip({ name }: { name: string }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Avatar>
+        <Avatar className='bg-gray-700'>
           <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
       </TooltipTrigger>
